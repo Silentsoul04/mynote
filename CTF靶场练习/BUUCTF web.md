@@ -1,0 +1,749 @@
+# BUUCTF
+
+## Web
+
+### [CISCN2019 华东北赛区]Web2
+
+https://blog.csdn.net/fdl3183566040/article/details/109011704
+
+
+
+
+
+## Crypto
+
+### MD5
+
+因为md5是一种类似于有损压缩的加密算法，所以没有可以直接解密的算法。
+ 只能去撞库
+
+`https://md5.gromweb.com/?md5=e00cf25ad42683b3df678c61f42c6bda`
+
+上面密码解密为**admin1**
+
+
+
+### 看我回旋踢
+
+看到直接凯撒就完事了
+
+
+
+### password
+
+讲道理，拿到题目的时候一时半会还不知道这个是什么意思，看了别人的wp才知道考的是简单的**弱密码**
+
+姓名缩写+生日就是flag了
+
+
+
+### 变异凯撒
+
+看到题目就知道和凯撒密码有关，但并不简单，而我们知道凯撒加密的原理为：
+
+**凯撒加密法，或称恺撒加密、恺撒变换、变换加密，是一种最简单且最广为人知的加密技术。它是一种替换加密的技术，明文中的所有字母都在字母表上向后（或向前）按照一个固定数目进行偏移后被替换成密文。**
+
+上面的结果中没有答案，这时我们再去看题目，变异的凯撒，凯撒加密与移动位数相关，那么变异可能就变在**移动**上了。而密文中有“_”,这个符号在字母表中是没有的，所以想到，可能是**ASCII码值得变动**。
+
+
+
+> 密文：afZ_r9VYfScOeO_UL^RWUc，看看能否与ctf 或者flag 对应上，
+>
+> 此时发现 a:97  f:102  Z:106   _:95                                                              
+>
+> 而      c:99  t:116   f:102   {:123
+>
+> ​        f:102  l:108  a:97   g:103
+>
+> a→f： 移动了5  f→l：移动了6， 后面依次移动了7、8。此时按照这种移动规律，去写代码
+
+
+
+```python
+# coding:utf-8
+
+
+def b_kaisa(mstr):
+    j = 5
+    i = 0
+    lmstr = ''
+    for i in range(len(mstr)):
+        m = ord(mstr[i])          # 将密文的第i个字母变为其ascii码值
+        m = m + j                 # ascii值+j
+        m = chr(m)                # 将ascii转换为字符串
+        lmstr += m                # 将递进后的ascii值存入字符串lmstr
+        i = i+1
+        j = j+1
+    return lmstr
+
+
+if __name__ == '__main__':
+    m_str = 'afZ_r9VYfScOeO_UL^RWUc'    # 密文
+    lstr = b_kaisa(m_str)
+    print(lstr)
+```
+
+最后就可以看到flag了
+
+
+
+### Quoted-printable
+
+首先介绍一下这种编码：
+
+它是**多用途互联网邮件扩展**（MIME) 一种实现方式。其中MIME是一个互联网标准，它扩展了电子邮件标准，致力于使其能够支持非ASCII字符、二进制格式附件等多种格式的邮件消息。目前http协议中，很多采用MIME框架！quoted-printable 就是说用一些可打印常用字符，表示一个字节（8位）中所有非打印字符方法！
+
+[Quoted-printable在线解码](http://web.chacuo.net/charsetquotedprintable)
+
+
+
+
+
+### Rabbit
+
+[Rabbit在线解码](https://www.sojson.com/encrypt_rabbit.html)
+
+
+
+### 篱笆墙的影子
+
+栅栏加密
+
+
+
+### RSA
+
+直接拿**RSATool2v17.exe**解就是了，注意e的值要转成16进制
+
+
+
+### 丢失的MD5
+
+直接在我们的环境下是不能执行的，因此要补上一点东西，根据题目所给信息写python脚本
+
+```python
+import hashlib
+for i in range(32,127):
+    for j in range(32,127):
+        for k in range(32,127):
+            m=hashlib.md5()
+            m.update('TASC'.encode('utf-8')+chr(i).encode('utf-8')+'O3RJMV'.encode('utf-8')+chr(j).encode('utf-8')+'WDJKX'.encode('utf-8')+chr(k).encode('utf-8')+'ZM'.encode('utf-8'))
+            des=m.hexdigest()
+            if 'e9032' in des and 'da' in des and '911513' in des:
+                print (des)
+```
+
+我们需要一个编码格式：.encode('utf-8')，运行结果就是falg了
+
+
+
+### 老文盲了
+
+直接扔到谷歌翻译，让谷歌给我们读出来
+
+得到flag: BJD{淛匶襫黼瀬鎶軄鶛驕鳓哵}
+
+
+
+### Alice与Bob
+
+我们首先根据题目要求进行分解
+
+```
+yafu-x64.exe factor(98554799767)
+```
+
+> P6 = 966233
+> P6 = 101999
+
+分解后组合得到：101999966233，再加密就好了
+
+[MD5加密](https://www.qqxiuzi.cn/bianma/md5.htm)
+
+
+
+### rsarsa
+
+直接python写一个脚本就好了
+
+```python
+def getEuler(prime1, prime2):
+    return (prime1 - 1) * (prime2 - 1)
+
+# 19d - 920071380k= 1
+# 求私钥d
+def getDkey(e, Eulervalue):  # 可以辗转相除法
+    k = 1
+    while True:
+        if (((Eulervalue * k) + 1) % e) == 0:
+            (d, m) = divmod(Eulervalue * k + 1, e)
+            return d  # 避免科学计数法最后转int失去精度
+        k += 1
+
+
+# 求明文
+def Ming(c, d, n):
+    return pow(c, d, n)
+
+
+if __name__ == '__main__':
+    p = 9648423029010515676590551740010426534945737639235739800643989352039852507298491399561035009163427050370107570733633350911691280297777160200625281665378483
+    q = 11874843837980297032092405848653656852760910154543380907650040190704283358909208578251063047732443992230647903887510065547947313543299303261986053486569407
+    d = getDkey(65537, getEuler(p, q))
+    print('私钥为： %d' % d)
+    c = 83208298995174604174773590298203639360540024871256126892889661345742403314929861939100492666605647316646576486526217457006376842280869728581726746401583705899941768214138742259689334840735633553053887641847651173776251820293087212885670180367406807406765923638973161375817392737747832762751690104423869019034
+    n = p * q
+    print('明文如下： ')
+    print(Ming(c, d, n))
+```
+
+
+
+### 大帝的密码武器
+
+数一下，我们将题目中给的字符串`FRPHEVGL`经行1-26的移位观察，发现偏移量为13时，为有意义单词
+
+写个脚本吧，将密文里面的`ComeChina`做偏移量为13的偏移：然后如果超出`z`，减26使其回到`A-z`范围内（别问我为什么，因为不减的结果`P|zrPuv{n`经过我的验证是不对的），最终得到`PbzrPuvan`，用花括号包起来就可以提交了`flag{PbzrPuvan}`
+
+```python
+str = 'ComeChina'
+
+
+for temp in str:
+    if(ord(temp)+13 > ord('z')):        # 这里的偏移量为13
+        print(chr(ord(temp)+13-26),end = '')
+    else:
+        print(chr(ord(temp)+13),end = '')
+print('')
+```
+
+
+
+### Windows系统密码
+
+拿到后拿记事本打开，发现是个文本，尝试用MD5进行解题
+
+最后尝试出，用这段就可以解出flag了
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200503150332198.png)
+
+
+
+### cat_flag
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200513153615301.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L01pa2VDb2tl,size_16,color_FFFFFF,t_70)
+
+图中只有两种小猫，一只有鸡腿，一只没有鸡腿。很容易想到二进制数0，1。将图片用二进制表示为：
+
+> 01000010
+> 01001010
+> 01000100
+> 01111011
+> 01001101
+> 00100001
+> 01100001
+> 00110000
+> 01111110
+> 01111101
+
+将二进制数转为16进制，再16进制转文本。
+得到flag为： BJD{M!a0~}
+
+
+
+### 燕言燕语-y1ng
+
+> 79616E7A69205A4A517B78696C7A765F6971737375686F635F73757A6A677D20
+
+首先进行16进制转字符串
+
+> yanzi ZJQ{xilzv_iqssuhoc_suzjg} 
+
+`ZJQ BJD` 这二者的对应关系应该算是提示，于是手算了一下，很容易发现，Z 往前移动 24 个位置得到 B，而 J 的位置没移动，Q 向前移动 13 个位置得到 D。而 24、0、13 的位置编号刚好对应当 A 为 0 时的字母编号
+
+这其实是个**维吉尼亚密码**
+
+[维吉尼亚密码在线解码&加密方式](https://www.qqxiuzi.cn/bianma/weijiniyamima.php)
+
+yanzi作为密钥，是维吉尼亚密码，经过解码得到：**BJD{yanzi_jiushige_shabi}**
+
+
+
+### 传统知识+古典密码
+
+我们先找到天干地支表，我们都知道一轮天干地支为60年，于是猜测与ASCII码有关
+
+|  1   |  2   |  3   |  4   |  5   |  6   |  7   |  8   |  9   |  10  |
+| :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
+| 甲子 | 乙丑 | 丙寅 | 丁卯 | 戊辰 | 己巳 | 庚午 | 辛未 | 壬申 | 癸酉 |
+|  11  |  12  |  13  |  14  |  15  |  16  |  17  |  18  |  19  |  20  |
+| 甲戌 | 乙亥 | 丙子 | 丁丑 | 戊寅 | 己卯 | 庚辰 | 辛巳 | 壬午 | 癸未 |
+|  21  |  22  |  23  |  24  |  25  |  26  |  27  |  28  |  29  |  30  |
+| 甲申 | 乙酉 | 丙戌 | 丁亥 | 戊子 | 己丑 | 庚寅 | 辛卯 | 壬辰 | 癸巳 |
+|  31  |  32  |  33  |  34  |  35  |  36  |  37  |  38  |  39  |  40  |
+| 甲午 | 乙未 | 丙申 | 丁酉 | 戊戌 | 己亥 | 庚子 | 辛丑 | 壬寅 | 癸卯 |
+|  41  |  42  |  43  |  44  |  45  |  46  |  47  |  48  |  49  |  50  |
+| 甲辰 | 乙巳 | 丙午 | 丁未 | 戊申 | 己酉 | 庚戌 | 辛亥 | 壬子 | 癸丑 |
+|  51  |  52  |  53  |  54  |  55  |  56  |  57  |  58  |  59  |  60  |
+| 甲寅 | 乙卯 | 丙辰 | 丁巳 | 戊午 | 己未 | 庚申 | 辛酉 | 壬戌 | 癸亥 |
+
+按照给的天干地支，查到分别对应，又因为要提示**”+甲子“**，于是再加上一轮60
+
+> 辛卯，癸巳，丙戌，辛未，庚辰，癸酉，己卯，癸巳
+>
+> 28，30，23，08，17，10，16，30
+>
+> 88，90，83，68，77，70，76，90
+
+我们将其转为ascii码，得到：XZSDMFLZ，又题目中说有古典密码，则想到栅栏加密，凯撒加密
+
+栅栏解密后得到：
+
+> 第1栏：XSMLZDFZ
+> 第2栏：XMZFSLDZ
+
+分别用凯撒解密，其中第二组得到解密得到flag
+
+> SHUANGYU  得到拼音：双鱼
+
+
+
+### 小学生的密码学
+
+这里考查的是：**仿射密码**
+
+**仿射密码**是一种替换密码。它是一个字母对一个字母的。它的加密函数是
+
+![img](https://bkimg.cdn.bcebos.com/formula/e4740660d919145d58019a70ae54b90b.svg)
+
+，其中a和m[互质](https://baike.baidu.com/item/互质)，m是字母的数目。解码函数是
+
+![img](https://bkimg.cdn.bcebos.com/formula/b4f3ea1c6819c357b7f90c78733696f5.svg)
+
+[仿射密码解密](http://www.atoolbox.net/Tool.php?Id=911)
+
+最后得到：sorcery，再按题目意思进行base64加密就好了
+
+
+
+### 信息化时代的步伐
+
+这里给的是**“中文电报”**，[中文电报查询](http://code.mcdvisa.com/)
+
+
+
+### RSA1
+
+这里题目没有给我们密钥e值，写个脚本吧
+
+```python
+# 不给密钥e值
+import gmpy2
+import binascii
+
+
+def decrypt(dp,dq,p,q,c):
+    InvQ = gmpy2.invert(q,p)
+    mp = pow(c,dp,p)
+    mq = pow(c,dq,q)
+    m=(((mp-mq)*InvQ)%p)*q+mq
+    print (binascii.unhexlify(hex(m)[2:]))
+
+
+p = 8637633767257008567099653486541091171320491509433615447539162437911244175885667806398411790524083553445158113502227745206205327690939504032994699902053229
+q = 12640674973996472769176047937170883420927050821480010581593137135372473880595613737337630629752577346147039284030082593490776630572584959954205336880228469
+dp = 6500795702216834621109042351193261530650043841056252930930949663358625016881832840728066026150264693076109354874099841380454881716097778307268116910582929
+dq = 783472263673553449019532580386470672380574033551303889137911760438881683674556098098256795673512201963002175438762767516968043599582527539160811120550041
+c = 24722305403887382073567316467649080662631552905960229399079107995602154418176056335800638887527614164073530437657085079676157350205351945222989351316076486573599576041978339872265925062764318536089007310270278526159678937431903862892400747915525118983959970607934142974736675784325993445942031372107342103852
+
+decrypt(dp,dq,p,q,c)
+```
+
+
+
+### 凯撒？替换？呵呵!
+
+以为是简单的凯撒加密，但是分析Ascill表，发现毫无规律，意味着要爆破出所有可能。只能用在线工具来弄了
+
+[quipqiup](https://www.quipqiup.com/)
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20191117141930217.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1lJSEFIVUhB,size_16,color_FFFFFF,t_70)
+
+最后得到第一个
+
+>  FLAG{ SUBSTITUTION CIPHER DECRYPTION IS ALWAYS EASY JUST LIKE A PIECE OF CAKE}
+
+我们还要转成小写，去空格，[英文字母大小写转换](https://www.iamwawa.cn/daxiaoxie.html)
+
+
+
+### 权限获得第一步
+
+得到这样一串字符：
+
+> **Administrator:500:806EDC27AA52E314AAD3B435B51404EE:F4AD50F57683D4260DFD48AA351A17A8:::**
+
+将**F4AD50F57683D4260DFD48AA351A17A8**用[MD5解密](https://cmd5.com/)
+
+得到flag为flag{3617656}
+
+
+
+### old-fashion
+
+打开压缩包得到文本
+
+词频分析，替换密码，用[爆破工具](https://quipqiup.com/)
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200513164728330.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L01pa2VDb2tl,size_16,color_FFFFFF,t_70)
+
+得到flag:
+flag{n1_2hen-d3_hu1-mi-ma_a}
+
+
+
+### Y1nglish-y1ng
+
+同样进行词频分析，替换密码，用[爆破工具](https://quipqiup.com/)
+
+
+
+### 世上无难事
+
+注意题目给的关键词：
+1.找到key作为答案提交
+2.答案是32位
+3.包含小写字母
+
+这是替换密码，直接用[爆破工具](https://quipqiup.com/)
+
+将 PIO 替换为 key
+
+转为小写，得到flag:
+flag{640e11012805f211b0ab24ff02a1ed09}
+
+
+
+### 异性相吸
+
+winhex看一看，就差不多是异或就好了，写个脚本
+
+```python
+a = '0110000101110011011000010110010001110011011000010111001101100100011000010111001101100100011000010111001101100100011000010111001101100100011000010111001101100100011000010111001101100100011000010111001101100100011000010111001101100100011000010111001101100100011100010111011101100101011100110111000101100110'
+b = '0000011100011111000000000000001100001000000001000001001001010101000000110001000001010100010110000100101101011100010110000100101001010110010100110100010001010010000000110100010000000010010110000100011000000110010101000100011100000101010101100100011101010111010001000001001001011101010010100001010000011011'
+c = ''
+
+for i in range(len(a)):  # 异或
+    if (a[i] == b[i]):
+        c += '0'
+    else:
+        c += '1'
+
+flag = ''  # 二进制转换为字符串
+for i in range(int(len(c) / 8)):
+    flag += chr(int(c[i * 8:(i + 1) * 8], 2))
+
+print(flag)
+```
+
+
+
+
+
+### RSA
+
+[RSA参考答案](https://www.cnblogs.com/harmonica11/p/11504291.html)
+
+
+
+### 还原大师
+
+拿到这个后，采用MD5爆破
+
+```python
+import hashlib
+
+c = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+a = 'E903???4DAB????08?????51?80??8A?'  # 判断用的元素
+flag = 0
+
+
+def f(mds):
+    for i in range(0, len(a)):
+        if a[i] == '?':
+            continue
+        elif a[i] != mds[i]:
+            return 0
+    return 1
+
+
+for i in range(0, len(c)):
+    if flag == 1:
+        break
+    for j in range(0, len(c)):
+        for k in range(0, len(c)):
+            b = 'TASC' + c[i] + 'O3RJMV' + c[j] + 'WDJKX' + c[k] + 'ZM'     # 要还原的明文
+            md = hashlib.md5(b.encode('utf8'))
+            mds = md.hexdigest().upper()        # 注意大小写
+            flag = f(mds)
+            if flag == 1:
+                print(mds)
+```
+
+
+
+### 汉字的秘密
+
+#### 考点：当铺密码
+
+笔画中有几个出头的就对应着数字几。例如：
+
+> 田：0	由：1	王：6	壮：9
+
+```python
+dh = '田口由中人工大土士王夫井羊壮'
+ds = '00123455567899'
+
+cip = '王壮 夫工 王中 王夫 由由井 井人 夫中 夫夫 井王 土土 夫由 土夫 井中 士夫 王工 王人 土由 由口夫'
+s = ''
+for i in cip:
+	if i in dh:
+		s += ds[dh.index(i)]
+	else:
+		s += ' '
+#print(s)
+
+ll = s.split(" ")
+t = ''
+for i in range(0,len(ll)):
+	t += chr(int(ll[i])+i+1)
+print('t=', t, '\t\tt.lower()=', t.lower())
+```
+
+
+
+### robomunication
+
+给了一个MP3文件，听后猜测是摩斯密码
+
+听到的都是“bi”或者“bu”，这里用b代表“bi”，“p”代表“bu”
+
+> bbbb b bpbb bpbb ppp bpp bbbb bp p
+>
+> bb bbb p bbbb b pbp b pbpp bb p bb bbb (p b bb) ppp ppp bppb pbbb b b bppb
+
+打括号那里显得较分散一开始是分开来记得，最后分析还是这四个与其他之间的间隔较明显，所以把括号里的四个算成一个
+
+因为音频里“bi”的声音比“bu”长，所以我觉得“bi”可能代表“—”，“bu”代表“![\cdot](https://private.codecogs.com/gif.latex?%5Cdpi%7B150%7D%20%5Ccdot)”
+
+最后提交的flag是：BOOPBEEP
+
+
+
+### RSA Roll
+
+[RSA Roll解题](https://www.52pojie.cn/forum.php?mod=viewthread&tid=490769&page=1&authorid=504980)
+
+
+
+### Cipher
+
+然后其实题目还是给出了提示：“公平” ，公平的英文是fair，联想到经典密码：**playfair密码（普莱费尔密码）**
+
+密钥是playfair，就很坑
+
+[普莱费尔密码加密/解密](http://www.atoolbox.net/Tool.php?Id=912)
+
+
+
+### Unencode
+
+> 89FQA9WMD<V1A<V1S83DY.#<W3$Q,2TM]
+
+[UUencode解码](http://ctf.ssleye.com/uu.html)
+
+Uuencode是二进制信息和文字信息之间的转换编码，也就是机器和人眼识读的转换。Uuencode编码方案常见于电子邮件信息的传输，目前已被多用途互联网邮件扩展（MIME）大量取代。
+
+Uuencode将输入文字以每三个字节为单位进行编码，如此重复进行。如果最后剩下的文字少于三个字节，不够的部份用零补齐。这三个字节共有24个Bit，以6-bit为单位分为4个群组，每个群组以十进制来表示所出现的数值只会落在0到63之间。将每个数加上32，所产生的结果刚好落在ASCII字符集中可打印字符（32-空白...95-底线）的范围之中。
+
+Uuencode编码每60个将输出为独立的一行（相当于45个输入字节），每行的开头会加上长度字符，除了最后一行之外，长度字符都应该是“M”这个ASCII字符（77=32+45），最后一行的长度字符为32+剩下的字节数目这个ASCII字符。
+
+
+
+### Dangerous RSA
+
+我们发现这又是一个RSA的题，但是E的值比较小，可以用小指数攻击
+
+写一个脚本吧
+
+```python
+from crypto.Util.number import long_to_bytes
+import primefac
+def modinv(a,n):
+    return primefac.modinv(a,n)%n
+n=0x52d483c27cd806550fbe0e37a61af2e7cf5e0efb723dfc81174c918a27627779b21fa3c851e9e94188eaee3d5cd6f752406a43fbecb53e80836ff1e185d3ccd7782ea846c2e91a7b0808986666e0bdadbfb7bdd65670a589a4d2478e9adcafe97c6ee23614bcb2ecc23580f4d2e3cc1ecfec25c50da4bc754dde6c8bfd8d1fc16956c74d8e9196046a01dc9f3024e11461c294f29d7421140732fedacac97b8fe50999117d27943c953f18c4ff4f8c258d839764078d4b6ef6e8591e0ff5563b31a39e6374d0d41c8c46921c25e5904a817ef8e39e5c9b71225a83269693e0b7e3218fc5e5a1e8412ba16e588b3d6ac536dce39fcdfce81eec79979ea6872793
+e=0x3
+c=0x10652cdfaa6b63f6d7bd1109da08181e500e5643f5b240a9024bfa84d5f2cac9310562978347bb232d63e7289283871efab83d84ff5a7b64a94a79d34cfbd4ef121723ba1f663e514f83f6f01492b4e13e1bb4296d96ea5a353d3bf2edd2f449c03c4a3e995237985a596908adc741f32365
+import gmpy2
+i=0
+while 1:
+    if(gmpy2.iroot(c+i*n,3)[1]==1):
+        print(long_to_bytes(gmpy2.iroot(c+i*n,3)[0]))
+        break
+    i+=1
+```
+
+
+
+### Morse
+
+摩尔解完后直接16进制转zfc
+
+
+
+### 达芬奇密码
+
+这里考的是：**斐波那契数列**
+
+> 1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987 1597 2584 4181 6765 10946 17711 28657 46368 75025 121393 196418 317811 514229 832040 1346269 2178309
+
+分析发现神秘数字串为32位，数字列也有32个数字，而flag也为一串32位10进制字符串。猜测神秘数字串可能为密文`c`，且和数字列存在一一映射的关系。
+
+因此，找到对应关系
+
+> 第`0`位的`1`就在斐波那契数列第`0`位，所以`3`的位置不变，还在第`0`位。
+> 第`1`位的`233`的位置在斐波那契数列第`12`位，所以`6`应该移到第`12`位。
+
+神秘数字串:36968853882116725547342176952286
+
+修改顺序
+
+得到flag：37995588256861228614165223347687
+
+
+
+### rsa2
+
+得到一份py文件，观察e,n可以知道这是一道**低解密指数攻击**
+
+
+
+### 传感器
+
+#### 考点：曼彻斯特编码
+
+曼彻斯特编码（Manchester Encoding），也叫做相位编码（ Phase Encode，简写PE），是一个同步时钟编码技术，被物理层使用来编码一个同步位流的时钟和数据。它在以太网媒介系统中的应用属于数据通信中的两种位同步方法里的自同步法（另一种是外同步法），即接收方利用包含有同步信号的特殊编码从信号自身提取同步信号来锁定自己的时钟脉冲频率，达到同步目的。
+
+ **01电平跳变表示1, 10的电平跳变表示0**
+
+> `5555555595555A65556AA696AA6666666955`转为二进制，根据01->1,10->0。可得到
+> 0101->11
+> 0110->10
+> 1010->00
+> 1001->01
+> decode得到
+> `11111111 11111111 01111111 11001011 11111000 00100110 00001010 10101010 10011111`
+> bin->hex，对比ID并不重合，根据八位倒序传输协议将二进制每八位reverse，转hex即可
+
+```python
+cipher='5555555595555A65556AA696AA6666666955'
+def iee(cipher):
+    tmp=''
+    for i in range(len(cipher)):
+        a=bin(eval('0x'+cipher[i]))[2:].zfill(4)
+        tmp=tmp+a[1]+a[3]
+        print(tmp)
+    plain=[hex(int(tmp[i:i+8][::-1],2))[2:] for i in range(0,len(tmp),8)]
+    print(''.join(plain).upper())
+
+iee(cipher)
+```
+
+
+
+### CheckIn
+
+首先Base64解密
+
+```
+dikqTCpfRjA8fUBIMD5GNDkwMjNARkUwI0BFTg==
+```
+
+其中：v对应G（GXY）或f（flag）
+
+```
+v)*L*_F0<}@H0>F49023@FE0#@EN
+```
+
+v到G位移47用[ROT47解密](https://www.qqxiuzi.cn/bianma/ROT5-13-18-47.php)
+
+```
+GXY{Y0u_kNow_much_about_Rot}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Mise
+
+
+
+
+
+
+
+
+
+
+
+
+
+## [HCTF 2018]WarmUp
+
+### 考点：文件包含
+
+查看网页源代码发现一个被注释的地址，直接进入
+
+```php
+$whitelist = ["source"=>"source.php","hint"=>"hint.php"];
+            if (! isset($page) || !is_string($page)) {
+                echo "you can't see it";
+                return false;
+            }
+```
+
+发现另一个文件，hint.php，进入后发现，网页提示：`flag not here, and flag in ffffllllaaaagggg`
+
+回到source.php代码，首先看下面部分:
+
+```php
+if(! empty($_REQUEST['file'])  		//$_REQUEST['file']值非空
+    && is_string($_REQUEST['file'])  		//$_REQUEST['file']值为字符串
+    && emmm::checkFile($_REQUEST['file']) 		 //能够通过checkFile函数校验
+    )
+	{
+     include $_REQUEST['file']; 		 //包含$_REQUEST['file']文件
+     exit;q
+    }
+	 else 
+	{
+     echo "<br><img src=\"https://i.loli.net/2018/11/01/5bdb0d93dc794.jpg\" />";				 //打印滑稽表情
+    }  
+```
+
+一个if语句要求传入的file变量：
+
+- 非空
+- 类型为字符串
+- 能够通过checkFile()函数，即页面上面函数的校验
+
+同时满足以上三个要求即可包含file中的文件，否则打印滑稽表情
