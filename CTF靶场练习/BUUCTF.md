@@ -111,7 +111,17 @@ file?filename=/fllllllllllllag&filehash=66acf0dead35f8cb39b318705ccb0661
 
 
 
+## [极客大挑战 2019]Http
 
+### 考点：
+
+
+
+通过查看网页源代码，发现一个文件Secret.php
+
+![BUUCTF Http1](images/BUUCTF.assets/BUUCTF%20Http1.png)
+
+进入后发现，页面要求必须从https://www.Sycsecret.com进入
 
 
 
