@@ -173,27 +173,198 @@ GIF89a?
 
 
 
+## [HCTF 2018]admin
+
+首先爬一遍整个网站，发现有没注册的时候有“login”,"register"这两个页面，我们注册一个123用户登录后发现有 "index“,”post“,”logout“，”change password“这四个界面，根据题目提示的admin，猜测我们需要登录admin用户。我们先放在后台跑一个爆破。
+
+没想到，居然密码是123，emmmm
+
+![img](https://img2018.cnblogs.com/blog/1697845/201910/1697845-20191022203159803-499098040.png)
+
+但还是要尝试用正确的方式打开，看了wp，这里有三种方法
+
+
+
+### 解法一：flask session伪造
+
+在"change password"页面有提示
+
+![img](https://img2018.cnblogs.com/blog/1697845/201910/1697845-20191022223422961-480807175.png)
+
+进入查看源码时发现是用**flask**写的
+
+> 由于 **flask** 是非常轻量级的 **Web框架** ，其 **session** 存储在客户端中（可以通过HTTP请求头Cookie字段的session获取），且仅对 **session** 进行了签名，缺少数据防篡改实现，这便很容易存在安全漏洞。
+
+
+
+这里我们想要伪造session，就需要先了解一下flask中session是怎么构造的。
+
+> flask中session是存储在客户端cookie中的，也就是存储在本地。flask仅仅对数据进行了签名。众所周知的是，签名的作用是防篡改，而无法防止被读取。而flask并没有提供加密操作，所以其session的全部内容都是可以在客户端读取的，这就可能造成一些安全问题。
+> 具体可参考：
+> https://xz.aliyun.com/t/3569
+> https://www.leavesongs.com/PENETRATION/client-session-security.html#
+
+我们可以通过大佬的脚本将session解密一下：
+
+```python
+import sys
+import zlib
+from base64 import b64decode
+from flask.sessions import session_json_serializer
+from itsdangerous import base64_decode
+
+def decryption(payload):
+    payload, sig = payload.rsplit(b'.', 1)
+    payload, timestamp = payload.rsplit(b'.', 1)
+
+    decompress = False
+    if payload.startswith(b'.'):
+        payload = payload[1:]
+        decompress = True
+
+    try:
+        payload = base64_decode(payload)
+    except Exception as e:
+        raise Exception('Could not base64 decode the payload because of an exception')
+
+    if decompress:
+        try:
+            payload = zlib.decompress(payload)
+        except Exception as e:
+            raise Exception('Could not zlib decompress the payload before decoding the payload')
+
+    return session_json_serializer.loads(payload)
+
+if __name__ == '__main__':
+    print(decryption(sys.argv[1].encode()))
+```
+
+![img](https://img-blog.csdnimg.cn/20190911131458737.png)
+
+但是如果我们想要加密伪造生成自己想要的session还需要知道SECRET_KEY，然后我们在config.py里发现了SECRET_KEY
+
+```
+SECRET_KEY = os.environ.get('SECRET_KEY') or 'ckj123'
+```
+
+![img](https://img2018.cnblogs.com/blog/1697845/201910/1697845-20191022234113782-665728522.png)
+
+然后在index.html页面发现只要session[‘name’] == 'admin’即可以得到flag
+
+于是我们找了一个flask session加密的脚本 https://github.com/noraj/flask-session-cookie-manager
+利用刚刚得到的SECRET_KEY，在将解密出来的name改为admin，最后用脚本生成我们想要的session将之替换就好了
+
+
+
+### 解法二：Unicode欺骗（预期解法）
+
+- 既然有源码，重点肯定是在注册登录的验证处理和对数据库操作。
+- 在 `index.html` 发现 当登录用户名为 `admin` 时 输出 flag
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200518153634487.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1RNXzEwMjQ=,size_16,color_FFFFFF,t_70)
+
+这里我们尝试使用二次注入，也就是先注册一个账号和 `admin` 不同，成功注册后，登录在修改密码时，能修改 `admin` 的密码。
+
+我们先在这个平台找字符：https://unicode-table.com/cn/sets/superscript-and-subscript-letters/
+
+这里先注册一个账号 ：ᴬᴰᴹᴵᴺ，密码：123
+
+> 这里的ᴬᴰᴹᴵᴺ就是我们要寻找的特殊字符
+
+修改密码：111，然后退出
+
+![img](https://img2018.cnblogs.com/blog/1697845/201910/1697845-20191023220511636-1755338111.png)
+
+用账号”admin“,密码：111成功登录
+
+![img](https://img2018.cnblogs.com/blog/1697845/201910/1697845-20191023220545823-1229410508.png)
+
+大致的思路是：在注册的时候 ”ᴬᴰᴹᴵᴺ“ 经过strlower()，转成”ADMIN“ ， 在修改密码的时候 ”ADMIN“经过strlower()变成”admin“ , 当我们再次退出登录的时候 ”admin“经过strlower()变成”admin“(没啥卵用，但是你已经知道了一个密码已知的”admin“，而且在index.html中可以看到只要session['name']=='admin',也就是只要用户名是’admin‘就可成功登录了)
 
 
 
 
 
+## [ACTF2020 新生赛]BackupFile
+
+#### 考点：代码审计
+
+题目提示“Try to find out source file!”，我们最后找到了index.php的备份文件——/index.php.bak
+
+> 还可能是类似于www.zip、bak.zip之类的
+
+```php
+<?php
+include_once "flag.php";
+
+if(isset($_GET['key'])) {
+    $key = $_GET['key'];
+    if(!is_numeric($key)) {
+        exit("Just num!");
+    }
+    $key = intval($key);
+    $str = "123ffwsfwefwf24r2f32ir23jrw923rskfjwtsw54w3";
+    if($key == $str) {
+        echo $flag;
+    }
+}
+else {
+    echo "Try to find out source file!";
+}
+```
+
+代码很简单，我们的Key**必须为数字**且**等于123ffwsfwefwf24r2f32ir23jrw923rskfjwtsw54w3**这一字符串
+
+感觉是考PHP的弱类型特性，int和string是无法直接比较的，php会将string转换成int然后再进行比较，转换成int比较时只保留数字，第一个字符串之后的所有内容会被截掉
+
+**所以相当于key只要等于123就满足条件了**
+
+![BUUCTF_BackupFile](images/BUUCTF.assets/BUUCTF_BackupFile.png)
 
 
 
 
 
+## [极客大挑战 2019]BuyFlag
 
+#### 考点：代码审计
 
+题目右侧菜单栏有payflag
 
+![BUUCTF_BuyFlag1](images/BUUCTF.assets/BUUCTF_BuyFlag1.png)
 
+打开查看页面及源代码
 
+![BUUCTF_BuyFlag2](images/BUUCTF.assets/BUUCTF_BuyFlag2.png)
 
+```php
+<!--
+    ~~~post money and password~~~
+if (isset($_POST['password'])) {
+    $password = $_POST['password'];
+    if (is_numeric($password)) {
+        echo "password can't be number</br>";
+    }elseif ($password == 404) {
+        echo "Password Right!</br>";
+    }
+}
+-->
+```
 
+根据这些信息分析，我们得到：
 
+- password要等于404才有权限购买
+- 金钱要等于100000000
 
+首先有个问题404是数值is_numeric函数会检测出来所以我们得绕过它，这里可以用截断，随便什么都好
 
+比如：|，；，%20什么的
 
+还有，这个包里面cookie的值有个user=0 CTF直觉这肯定要改成1的 因为正常情况下这里是cookie的值 所以我们用bp测试
+
+最后这个money是用strcmp的函数验证了长度，我们利用特性绕过它，money后面加[]绕过  即可得到flag
+
+![BUUCTF_BuyFlag3](images/BUUCTF.assets/BUUCTF_BuyFlag3.png)
 
 
 
