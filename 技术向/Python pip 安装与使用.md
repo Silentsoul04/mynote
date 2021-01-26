@@ -150,6 +150,8 @@ python3 -m pip install XXX
 ```
 pip install -i http://pypi.douban.com/simple --trusted-host pypi.douban.com packagename # packagename是要下载的包的名字
 pip install -i http://e.pypi.python.org --trusted-host e.pypi.python.org --upgrade pip # 升级pip
+
+pip2 install -i http://pypi.douban.com/simple --trusted-host pypi.douban.com 
 ```
 
 

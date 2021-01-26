@@ -372,6 +372,8 @@ if (isset($_POST['password'])) {
 
 ## [SUCTF 2019]CheckIn
 
+#### 考点：文件上传
+
 先上传一个一句话木马，文件名webshell.jpg
 
 ```
@@ -405,7 +407,7 @@ http://0619ccaf-57a0-45a8-9799-c6c96e0cbac3.node3.buuoj.cn/uploads/852aff287f54b
 
 ## [BJDCTF2020]Easy MD5
 
-### 考点：password='".md5($pass,true)."'
+### 考点：MD5绕过
 
 参考：https://www.jianshu.com/p/12125291f50d
 
@@ -473,6 +475,8 @@ param1[]=1&param2[]=2
 
 
 ## [ZJCTF 2019]NiZhuanSiWei
+
+### 考点：php伪协议+php反序列化
 
 题目给了源码，我们查看一下
 
@@ -568,7 +572,7 @@ echo $password;
 
 
 
-
+## [CISCN2019 华北赛区 Day2 Web1]Hack World
 
 
 
@@ -1397,6 +1401,55 @@ r=a%z
 print(long_to_bytes(r))
 #b"A treasure map is a map that marks the location of buried treasure, a lost mine, a valuable secret or a hidden locale. So flag is afctf{1sn't_s0_int3Resting}."
 ```
+
+
+
+
+
+## 密码学的心声
+
+二战时期，某国军官与一个音乐家情妇相好，然而自从那时起，他屡战屡败，敌人似乎料事如神。他也有怀疑过他的情妇，但是他经过24小时观察他的情妇，发现她每天都只是作曲，然后弹奏给战地电台，为士兵们鼓气，并未有任何逾越。那么，间谍到底是谁？这张曲谱是否有猫腻？
+
+图片中的线索很明显ASCLL码 八进制，数字三个一组，转换就行了
+
+```python
+s = '111 114 157 166 145 123 145 143 165 162 151 164 171 126 145 162 171 115 165 143 150'
+tmp = [s.split(' ')[i] for i in range(len(s.split(' ')))]
+cipher = ''
+for i in tmp:
+    cipher += chr(int(i,8))
+flag = "flag{"+cipher+"}"
+print(flag)
+# flag{ILoveSecurityVeryMuch}
+```
+
+
+
+
+
+## 神秘龙卷风
+
+拿到一个加密的rar，提示四位数字，我们就爆破一下，密码为：5463
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200913145844363.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L21vY2h1Nzc3Nzc3Nw==,size_16,color_FFFFFF,t_70#pic_center)
+
+打开得到
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200913145931119.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L21vY2h1Nzc3Nzc3Nw==,size_16,color_FFFFFF,t_70#pic_center)
+
+`brainfuck`代码，使用在线执行网站运行即可得到flag：http://bf.doleczek.pl/
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20200913150058341.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L21vY2h1Nzc3Nzc3Nw==,size_16,color_FFFFFF,t_70#pic_center)
+
+
+
+
+
+
+
+
+
+
 
 
 
