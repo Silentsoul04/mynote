@@ -1445,13 +1445,100 @@ print(flag)
 
 
 
+## [MRCTF2020]古典密码知多少
+
+#### 考点：古典密码
+
+这张图混合了多种古典密码
+
+![BUUCTF古典密码知多少1](images/BUUCTF.assets/BUUCTF%E5%8F%A4%E5%85%B8%E5%AF%86%E7%A0%81%E7%9F%A5%E5%A4%9A%E5%B0%911.png)
+
+- **蓝色**的字符为猪圈密码
+- **橙色**为猪圈密码的变种**圣堂武士密码**
+- **黑色**的字符属实冷门，看起来很熟悉，但是实在是查不到（陌生又熟悉。。。），经过大佬的告知才知道是**标准银河字母**
+
+将密文经过栅栏解密得到flag：FLAG IS CRYPTOFUN
 
 
 
 
 
+## [MRCTF2020]天干地支+甲子
+
+题目如图
+
+![img](https://img-blog.csdnimg.cn/img_convert/bfcde7fd9600e724ea2e866e18db806b.png)
+
+查询百度得到：**天干有十个，地支有十二个，六十甲子**
+
+所以这里用刚刚文件里的内容对照甲子的顺序数+60，通过ASCII码转换得到flag
+flag：flag{Goodjob}
 
 
+
+
+
+## [MRCTF2020]vigenere
+
+#### 考点：维吉尼亚
+
+题目提示维吉尼亚，随便找了个在线网站在线解密，接出来最后一行就是flag
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20210115180144664.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0xpbmdESUhvbmc=,size_16,color_FFFFFF,t_70)
+
+flag：flag{vigenere_crypto_crack_man}
+
+
+
+
+
+## [WUSTCTF2020]佛说：只能四天
+
+#### 考点：新约佛论禅+社会主义核心价值观解码+栅栏密码+凯撒密码+Base32解码
+
+题目：
+
+```
+尊即寂修我劫修如婆愍闍嚤婆莊愍耨羅嚴是喼婆斯吶眾喼修迦慧迦嚩喼斯願嚤摩隸所迦摩吽即塞願修咒莊波斯訶喃壽祗僧若即亦嘇蜜迦須色喼羅囉咒諦若陀喃慧愍夷羅波若劫蜜斯哆咒塞隸蜜波哆咤慧聞亦吽念彌諸嘚嚴諦咒陀叻咤叻諦缽隸祗婆諦嚩阿兜宣囉吽色缽吶諸劫婆咤咤喼愍尊寂色缽嘚闍兜阿婆若叻般壽聞彌即念若降宣空陀壽愍嚤亦喼寂僧迦色莊壽吽哆尊僧喼喃壽嘚兜我空所吶般所即諸吽薩咤諸莊囉隸般咤色空咤亦喃亦色兜哆嘇亦隸空闍修眾哆咒婆菩迦壽薩塞宣嚩缽寂夷摩所修囉菩阿伏嘚宣嚩薩塞菩波吶波菩哆若慧愍蜜訶壽色咒兜摩缽摩諦劫諸陀即壽所波咤聞如訶摩壽宣咤彌即嚩蜜叻劫嘇缽所摩闍壽波壽劫修訶如嚩嘇囉薩色嚤薩壽修闍夷闍是壽僧劫祗蜜嚴嚩我若空伏諦念降若心吽咤隸嘚耨缽伏吽色寂喃喼吽壽夷若心眾祗喃慧嚴即聞空僧須夷嚴叻心願哆波隸塞吶心須嘇摩咤壽嘚吶夷亦心亦喃若咒壽亦壽囑囑
+```
+
+1、这里用[与佛论禅](http://www.keyfc.net/bbs/tools/tudoucode.aspx)解不出来，“新约全书”可能是提示吧，最后用[新约佛论禅](http://hi.pcmoe.net/buddha.html)解得
+
+注意：前面要加上“佛曰：”
+
+```
+平等文明自由友善公正自由诚信富强自由自由平等民主平等自由自由友善敬业平等公正平等富强平等自由平等民主和谐公正自由诚信平等和谐公正公正自由法治平等法治法治法治和谐和谐平等自由和谐自由自由和谐公正自由敬业自由文明和谐平等自由文明和谐平等和谐文明自由和谐自由和谐和谐平等和谐法治公正诚信平等公正诚信民主自由和谐公正民主平等平等平等平等自由和谐和谐和谐平等和谐自由诚信平等和谐自由自由友善敬业平等和谐自由友善敬业平等法治自由法治和谐和谐自由友善公正法治敬业公正友善爱国公正民主法治文明自由民主平等公正自由法治平等文明平等友善自由平等和谐自由友善自由平等文明自由民主自由平等平等敬业自由平等平等诚信富强平等友善敬业公正诚信平等公正友善敬业公正平等平等诚信平等公正自由公正诚信平等法治敬业公正诚信平等法治平等公正友善平等公正诚信自由公正友善敬业法治法治公正公正公正平等公正诚信自由公正和谐公正平等
+```
+
+2、拿[社会主义核心价值观编码](https://atool.vip/corevalue/)解码：
+
+```
+RLJDQTOVPTQ6O6duws5CD6IB5B52CC57okCaUUC3SO4OSOWG3LynarAVGRZSJRAEYEZ_ooe_doyouknowfence
+```
+
+3、字符串末提示栅栏密码，起初将整个字符串放进去解码发现怎么也得不到有用的信息。。。实际上要先把后面的提示信息去掉，再解码。也即：
+
+```
+RLJDQTOVPTQ6O6duws5CD6IB5B52CC57okCaUUC3SO4OSOWG3LynarAVGRZSJRAEYEZ_ooe用4位栅栏密码
+```
+
+最后[栅栏密码解密](https://www.qqxiuzi.cn/bianma/zhalanmima.php)结果为：
+
+```
+R5UALCUVJDCGD63RQISZTBOSO54JVBORP5SAT2OEQCWY6CGEO53Z67L_doyouknowCaesar
+```
+
+4、同理这里去掉提示信息，再用[凯撒密码](https://www.qqxiuzi.cn/bianma/kaisamima.php)解密，这里的凯撒密码移位数为3，结果是：
+
+```
+O5RXIZRSGAZDA63ONFPWQYLPL54GSYLOM5PXQ2LBNZTV6ZDBL53W67I
+```
+
+5、再通过[Base32解码](https://www.qqxiuzi.cn/bianma/base.php)得到：
+
+```
+wctf2020{ni_hao_xiang_xiang_da_wo}
+```
 
 
 
