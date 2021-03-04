@@ -141,10 +141,10 @@ deploy:
    npm install hexo-cli -g
    ```
 
-6. 然后在本地空文件夹克隆我们备份的文件
+6. 然后在本地空文件夹克隆我们备份的文件，这里我们指定一下只clone hexo分支
 
    ```
-   git clone git@github.com:Username/Username.github.io.git
+   git clone -b hexo git@github.com:Username/Username.github.io.git
    ```
 
 7. 在文件夹内执行以下命令
