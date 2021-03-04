@@ -86,7 +86,13 @@ git push
 
 在本地对博客修改（包括修改主题样式、发布新文章等）后
 
-1、执行`git add`，`git commit -m "提交文件"`，`git push origin Hexo`来提交Hexo网站源文件；
+1、执行`git add .`，`git commit -m "提交文件"`，`git push origin hexo`来提交Hexo网站源文件；（由于我们在windows下，所以直接写个bat）
+
+```
+git add .
+git commit -m "beifen"
+git push origin hexo
+```
 
 2、执行hexo g -d 生成静态网页部署到github上；
  （每次发布重复这两步，它们之间没有严格的顺序）
@@ -147,4 +153,38 @@ deploy:
    npm install hexo-deployer-git
    ```
 
-   
+
+
+
+**Tips:**
+
+1. 不要忘了，每次写完最好都把源文件上传一下
+
+```text
+git add .
+git commit –m "xxxx"
+git push 
+```
+
+1. 如果是在已经编辑过的电脑上，已经有clone文件夹了，那么，每次只要和远端同步一下就行了
+
+```text
+git pull
+```
+
+
+
+## 附录
+
+Hexo的源文件说明：
+ 1、`_config.yml`站点的配置文件，需要拷贝；
+ 2、`themes/`主题文件夹，需要拷贝；
+ 3、`source`博客文章的.md文件，需要拷贝；
+ 4、`scaffolds/`文章的模板，需要拷贝；
+ 5、`package.json`安装包的名称，需要拷贝；
+ 6、`.gitignore`限定在push时哪些文件可以忽略，需要拷贝；
+ 7、`.git/`主题和站点都有，标志这是一个git项目，不需要拷贝；
+ 8、`node_modules/`是安装包的目录，在执行npm install的时候会重新生成，不需要拷贝；
+ 9、`public`是hexo g生成的静态网页，不需要拷贝；
+ 10、`.deploy_git`同上，hexo g也会生成，不需要拷贝；
+ 11、`db.json`文件，不需要拷贝。
