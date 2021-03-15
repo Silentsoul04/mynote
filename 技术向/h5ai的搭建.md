@@ -186,7 +186,7 @@ H5ai可以启用一些个性化服务，只需要修改相关配置即可。配�
 docker run [-t/-d] -p [80]:80 -v [$PWD]:/h5ai --name h5ai ilemonrain/h5ai:[lite/full]
 
 #示例
-docker run --restart=always -t -p 8081:80 -d -v /opt/h5ai:/h5ai --name h5ai ilemonrain/h5ai:full
+docker run --restart=always -t -p 2333:80 -d -v /opt/h5ai:/h5ai --name h5ai ilemonrain/h5ai:full
 ```
 
 - **-d/-t：**决定是以**后台运行模式启动**或**是前台监控模式启动**。 使用-d参数启动，镜像将不会输出任何日志到你的Console，直接以Daemon模式启动。Deamon模式启动下，可以使用docker logs h5ai命令显示启动日志。 使用-t参数启动，将会直接Attach你的镜像到你的Console，这个模式启动下，你可以直观的看到镜像的启动过程，适合于初次部署镜像，以及镜像Debug部署使用。你可以使用Ctrl+C将Docker镜像转入后台运行，使用docker attach h5ai命令显示启动日志。 

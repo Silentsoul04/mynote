@@ -64,6 +64,8 @@ apt-get install screen
 
 ## 常见screen命令
 
+
+
 ### 创建screen会话
 
 ```
@@ -77,7 +79,7 @@ screen就会创建一个名字为lnmp的会话
 ### 查看当前系统screen运行窗口
 
 ```
-screen ls
+screen -ls
 ```
 
 
@@ -101,7 +103,11 @@ screen -X -S 122128 quit	# 这里的122128是窗口ID号，我们可以ls查
 当回来时可以再执行执行：**screen -r lnmp** 即可恢复到离开前创建的lnmp会话的工作界面。如果忘记了，或者当时没有指定会话名，可以执行：**screen -ls** screen会列出当前存在的会话列表，如下图：
 [![screen-ls](https://www.vpser.net/uploads/2010/10/screen-ls.jpg)](https://www.vpser.net/uploads/2010/10/screen-ls.jpg)
 
-11791.lnmp即为刚才的screen创建的lnmp会话，目前已经暂时退出了lnmp会话，所以状态为Detached，当使用screen -r lnmp后状态就会变为Attached，11791是这个screen的会话的进程ID，恢复会话时也可以使用：**screen -r 11791**
+11791.lnmp即为刚才的screen创建的lnmp会话，目前已经暂时退出了lnmp会话，所以状态为Detached，当使用screen -r lnmp后状态就会变为Attached，11791是这个screen的会话的进程ID，恢复会话时也可以使用：
+
+```
+screen -r 11791
+```
 
 
 

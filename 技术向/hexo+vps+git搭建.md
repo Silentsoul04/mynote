@@ -279,10 +279,10 @@ git:x:1002:1002::/home/git:/bin/bash      改为：       git:x:1002:1002::/home
 命令如下，我们用root用户输入
 
 ```
-mkdir -p /www/hexo_blog
-mkdir -p /www/repo
+mkdir -p /opt/www/hexo_blog
+mkdir -p /opt/www/repo
 
-cd /www/repo
+cd /opt/www/repo
 sudo git init --bare blog.git
 ```
 
@@ -297,17 +297,17 @@ sudo git init --bare blog.git
 在 `blog.git/hooks` 目录下新建一个 `post-receive` 文件：
 
 ```
-cd /www/repo/blog.git/hooks
+cd /opt/www/repo/blog.git/hooks
 vim post-receive
 ```
 
 在 `post-receive` 文件中写入如下内容：
 
 ```
-git --work-tree=/www/hexo_blog --git-dir=/www/repo/blog.git checkout -f
+git --work-tree=/opt/www/hexo_blog --git-dir=/opt/www/repo/blog.git checkout -f
 ```
 
-注意，`/www/hexo_blog` 要换成你自己的部署目录。上面那句 git 命令可以在我们每次 push 完之后，把部署目录更新到博客的最新生成状态。这样便可以完成达到自动部署的目的了。
+注意，/opt`/www/hexo_blog` 要换成你自己的部署目录。上面那句 git 命令可以在我们每次 push 完之后，把部署目录更新到博客的最新生成状态。这样便可以完成达到自动部署的目的了。
 
 不要忘记设置这个文件的可执行权限：
 
@@ -318,8 +318,8 @@ chmod +x post-receive
 最后我们把`blog.git`和`hexo_blog`的拥有者给git用户
 
 ```
-sudo chown -R git:git /www/repo/blog.git
-sudo chown -R git:git /www/hexo_blog
+sudo chown -R git:git /opt/www/repo/blog.git
+sudo chown -R git:git /opt/www/hexo_blog
 ```
 
 

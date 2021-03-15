@@ -330,3 +330,10 @@ docker volume rm $(docker volume ls -q -f dangling=true)
 dockerignore使用
 
 类似.gitignore一样，运行Dockerfile里的COPY指令的时候会根据.dockerignore进行部分目录或者文件忽略。
+
+进入容器
+
+```
+sudo docker exec -it xxxxx sh
+```
+
