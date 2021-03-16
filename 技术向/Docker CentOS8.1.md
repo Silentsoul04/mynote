@@ -119,7 +119,7 @@ docker restart 重新开始一个运行的容器
 
 **docker kill 杀死一个运行的容器**
 
-docker rm 删除一个或更多的容器
+**docker rm 删除一个或更多的容器**
 
 docker pause 暂停一个容器的所有进程
 
