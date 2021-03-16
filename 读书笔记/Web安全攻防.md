@@ -2777,17 +2777,123 @@ move_uploaded_file($temp_file, $img_path)
 - **支付订单：**在支付订单时，可以篡改价格为任意金额；或者可以改运费或其他费用为负数，导致总金额降低
 - **越权访问：**通过越权漏洞访问他人信息或者操纵他人账号
 - **重置密码：**在重置密码时，存在多种逻辑漏洞，比如利用 session覆盖重置密码、短信验证码直接在返回的数据包中等
-- **竟争条件：**
+- **竟争条件：**竟争条件常见于多种攻击场景中，比如前面介绍的文件上传漏洞。还有一个常见场景就是购物时，例如用户A的余额为10元，商品B的价格为6元，商品C的价格为5元，如果用户A分别购买商品B和商品C,那余额肯定是不够的。但是如果用户A利用竞争条件，使用多线程同时发送购买商品B和商品C的请求，可能会出现以下这几种结果。
+  - 有一件商品购买失败
+  - 商品都购买成功，但是只扣了6元
+
+
+
+#### 越权访问防御
+
+权访问漏洞产生的主要原因是没有对用户的身份做判断和控制，防护这种漏洞时，可以通过 session来控制。例如在用户登录成功后，将 username或uid写入到session中，当用户查看个人信息时，从 session中取出 username,而不是从GET或POST取 username,那么此时取到的 username就是没有被纂改的。
 
 
 
 
 
+### XXE漏洞
+
+介绍 XXE 之前，我先来说一下普通的 XML 注入，这个的利用面比较狭窄，如果有的话应该也是逻辑漏洞
+
+![img](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/20181120002645-e7aed0d2-ec17-1.png)
+
+既然能插入 XML 代码，那我们肯定不能善罢甘休，我们需要更多，于是出现了 XXE
+
+XXE(XML External Entity Injection) 全称为 XML 外部实体注入，从名字就能看出来，这是一个注入漏洞，注入的是什么？XML外部实体。(看到这里肯定有人要说：你这不是在废话)，固然，其实我这里废话只是想强调我们的利用点是 **外部实体** ，也是提醒读者将注意力集中于外部实体中，而不要被 XML 中其他的一些名字相似的东西扰乱了思维(**盯好外部实体就行了**)，如果能注入外部实体并且成功解析的话，这就会大大拓宽我们 XML 注入的攻击面（这可能就是为什么单独说 而没有说 XML 注入的原因吧，或许普通的 XML 注入真的太鸡肋了，现实中几乎用不到）
+
+> XML用于标记电子文件使其具有结构性的标记语言，可以用来标记数据、定义数据类型，是一种允许用户对自己的标记语言进行定义的源语言。XML文档结构包括XML声明、DTD文档类型定义（可选）、文档元素
+
+**XML示例代码：**
+
+```xml
+<?xml version="1.0"?>			//这一行是 XML 文档声明
+<!DOCTYPE message [
+<!ELEMENT message (receiver ,sender ,header ,msg)>
+<!ELEMENT receiver (#PCDATA)>
+<!ELEMENT sender (#PCDATA)>				// 这几行都是文档类型定义(DTD)
+<!ELEMENT header (#PCDATA)>
+<!ELEMENT msg (#PCDATA)>
+]>
+<note>
+    <to>Tove</to>
+    <from>Jani</from>				// 文档元素
+    <heading>Reminder</heading>
+    <body>Antlers!</body>
+</note>
+```
+
+其中，文档类型定义(DTD)可以是内部声明也可以引用外部DTD，如下所示：
+
+- 内部声明DTD格式：<! DOCTYPE 根元素 [元素声明]>
+- 引用外部DTD格式：<! DOCTYPE 根元素 SYSTEM "文件名">
+- 在DTD中进行实体声明时，将使用 ENTITY关键字来声明。实体是用于定义引用普通文本或特殊字符的快捷方式的变量。实体可在内部或外部进行声明。
+- 内部声明实体格式：<! ENTITY 实体名称 "实体的值">。
+- 引用外部实体格式：<! ENTITY 实体名称 SYSTEN "URI">
+
+
+
+**示例：**
+
+这里演示pikachu靶场的XXE
+
+![image-20210316202553097](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210316202553097.png)
+
+这里HTTP请求的POST参数如下
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE name [
+	<!ELEMENT xxe SYSTEM "file:///etc/passwd"
+]>
+<xml>
+<xxe>&xxe;</xxe>
+</xml>
+```
+
+在POST参数中，关键语句为"file:///etc/passwd”，该语句的作用是通过file协议读取本地文件 /etc/passwd
+
+页面回显
+
+![在这里插入图片描述](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/20191125175028242.png)
+
+
+
+#### XXE漏洞分析
+
+服务器端处理XML的代码如下：
+
+```php
+<?php
+    $xmlfile = file_get_contents('php://input');
+    $dom = new DOMDocument();
+	$dom->loadXML($xmlfile);
+	$xml = simplexml_import_dom($dom);
+	$xxe = $xml->xxe;
+	$str = "$xxe \n";
+	echo $str;
+?>
+```
+
+- 使用 file_get_contents 获得客户端输入的内容
+- 使用 new DOMDocument() 初始化XML解析器
+- 使用 loadxml(Sxmlfile)加载客户端输入的XML内容
+- 使用 simplexml_import_dom(sdom) 获取XML文档节点，如果成功则返回 Simplexmlelement对象，如果失败则返回 FALSE
+- 获取 Simplexmlelement 对象中的节点XXE，然后输出XXE的内容
+
+可以看到，代码中没有限制XML引入外部实体，所以当我们创建一个包含外部实体的XML时，外部实体的内容就会被执行
+
+
+
+#### XXE漏洞防御
+
+- 禁止使用外部实体，例如 libxml_disable_entity_loader(true)
+- 过滤用户提交的XML数据，防止出现非法内容
 
 
 
 
 
+### WAF那些事
 
 
 
