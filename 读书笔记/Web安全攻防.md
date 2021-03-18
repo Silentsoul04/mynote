@@ -3253,23 +3253,30 @@ set payloads cmd/unix/reverse
 
 攻击成功后，我们会和目标主机建立一个shell连接！
 
-![image-20210318091744865](images/Web%E5%AE%89%E5%85%A8%E6%94%BB%E9%98%B2.assets/image-20210318091744865.png)
+![image-20210318091744865](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318091744865.png)
 
 
 
-### 后渗透攻击：信息收集
+### 后渗透攻击工作
+
+对成功渗透进的主机，我们可以使用**Metasploit**提供的**Meterpreter**工具，使后续的渗透入侵变得更容易。后期渗透模块有200多个，Meterpreter有以下优势
+
+- 使用加密通信协议，而且可以同时与几个信道通信。
+- 在被攻击进程内工作，不需要创建新的进程。
+- 易于在多进程之间迁移。
+- 平台通用，适用于 Windows、Linux、BSD系统，并支持Intel x86和Intel x64平台。
+
+本节将介绍如何利用**Meterpreter**做好后渗透的准备工作及收集系统各类信息和数据
 
 
 
+#### 进程迁移
 
+刚刚获得的**Meterpreter shell**是十分脆弱的和易受攻击的，如果目标发现直接下线这个服务就会导致好不容易拿到是shell消失，所以，我们拿到shell后第一步就是**移动shell**，将它和目标中一个**稳定的进程绑定在一起**，而不需要对磁盘进行任何写入操作，使得渗透更难被检测到！
 
+**首先 `ps` 查看目标主机有哪些进程**
 
-
-
-
-
-
-
+![image-20210318125104109](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318125104109.png)
 
 
 
