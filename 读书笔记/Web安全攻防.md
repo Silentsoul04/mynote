@@ -1,6 +1,4 @@
-
-
-# Web安全攻防
+Web安全攻防
 
 ## 渗透测试之信息收集
 
@@ -3110,7 +3108,7 @@ MSF框架由多个模块组成
 
 ### 主机扫描
 
-#### 使用辅助模块进行端口扫描
+#### 辅助模块——端口扫描
 
 利用search命令搜索可以端口模块
 
@@ -3126,17 +3124,150 @@ search portscan
 
 这里使用TCP模块，`auxiliary/scanner/portscan/tcp`
 
-```
-use 5			// 这里可以快捷选择5
-```
+输入 `use` 命令即可使用该模块，使用 `show options` 命令查看需要设置的参数：
+
+![image-20210317180230407](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210317180230407.png)
 
 
+
+查看Required列中，被标记为yes的参数必须填写参数。其中RHOSTS设置待扫描的IP地址、PORTS设置扫描端口范围、THREADS设置扫描线程，我们使用set命令设置相应的参数，也可以使用unset命令取消某个参数值的设置！
+
+我们通过再次  `show options` 查看刚刚设置的值，设置好了就可以 `run` 运行了！
+
+![image-20210317201214313](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210317201214313.png)
+
+**知识点：**
+
+> 其实还有两条可选命令-setg命令和unsetg命令。二者用于Metasploit中设置或取消全局性的参数值，从而避免重复输入相同的值。
+
+
+
+#### 辅助模块——服务扫描
+
+通过search命令搜索scanner可以发现大量的扫描模块
+
+
+
+| 模块                                  | 功能              |
+| ------------------------------------- | ----------------- |
+| auxiliary/scanner/portscan/tcp        | 端口扫描          |
+| auxiliary/scanner/smb/smb_version     | SMB系统版本扫描   |
+| auxiliary/scanner/smb/smb_enumusers   | SMB枚举           |
+| auxiliary/scanner/smb/smb_login       | SMB弱口令扫描     |
+| auxiliary/scanner/smb/psexec_command  | SMB登录且执行命令 |
+| auxiliary/scanner/ssh/ssh_login       | SSH登录测试       |
+| auxiliary/scanner/mssql/mssql_ping    | MSSQL主机信息扫描 |
+| auxiliary/admin/mssql/mssql_enum      | MSSQL枚举         |
+| auxiliary/admin/mssql/mssql_exec      | MSSQL命令执行     |
+| auxiliary/admin/mssql/mssql_sql       | MSSQL查询         |
+| auxiliary/scanner/mssql/mssql_login   | MSSQL弱口令扫描   |
+| auxiliary/admin/mysql/mysql_enum      | MySQL枚举         |
+| auxiliary/admin/mysql/mysql_sql       | MySQL语句执行     |
+| auxiliary/scanner/mysql/mysql_login   | MySQL弱口令扫描   |
+| auxiliary/scanner/smtp/smtp_version   | SMTP版本扫描      |
+| auxiliary/scanner/smtp/smtp_enum      | SMTP枚举          |
+| auxiliary/scanner/snmp/community      | SNMP扫描设备      |
+| auxiliary/scanner/telnet/telnet_login | LELNET登录        |
+| auxiliary/scanner/vnc/vnc_none_auth   | VNC空口令扫描     |
+
+
+
+#### 使用Nmap扫描
+
+在这Metasploit同样可以使用Nmap扫描，具体用法之前讲过，这里我们只要在msf命令提示符下输入`nmap`
+
+![image-20210318082609905](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318082609905.png)
+
+例如我们获得目标主机的操作系统（参数意思是不使用ping的方式，假定目标主机是活动的，可以穿透防火墙，避免被防火墙发现）
+
+```
+nmap -O -Pn/p0 192.168.163.136
+```
+
+可以看到目标操作系统是Linux 2.6版本
+
+![image-20210318083350714](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318083350714.png)
+
+
+
+### 漏洞利用
+
+每个操作系统都有bug，需要及时更新安全补丁，但是打补丁会造成机器重启或者死机。安全意识薄弱的个人用户或企业可能会忽略了更新系统补丁，那么未打补丁的机器，就是一个黑客快乐的“天堂”
+
+我们选用Metasploitable2（专门用来进行LInux渗透的靶机），这是一个Ubuntu发行版
+
+
+
+#### 1、开始信息收集
+
+首先进行目标主机的端口扫描，收集服务版本的信息
+
+![image-20210318084425283](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318084425283.png)
+
+
+
+#### 2、利用漏洞模块
+
+这里我们举例samba应用，这是一款局域网内的共享文件系统基于SMB协议的免费软件
+
+我们输入：`msf> search samba` 寻找samba的漏洞利用模块
+
+![image-20210318084833101](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318084833101.png)
+
+这个排序是根据各个漏洞利用的难易度进行排序的，这里选用`usermap_script`进行渗透
+
+![image-20210318085114690](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318085114690.png)
+
+我们可以用：info 命令查询这个模块的信息，这里我们就直接use这个模块`show options` 查看所需的信息
 
 ```
 show options
 ```
 
-![image-20210317180230407](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210317180230407.png)
+![image-20210318085321345](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318085321345.png)
+
+
+
+接着我们使用 `show payloads` 查看该漏洞模块下的攻击载荷，这里我们攻击Linux主机，需要选择LInux下的攻击载荷
+
+```
+show payloads
+set payloads cmd/unix/reverse
+```
+
+这里选择基础的 `cmd/unix/reverse` 反向攻击载荷模块
+
+![image-20210318085921553](images/Web%E5%AE%89%E5%85%A8%E6%94%BB%E9%98%B2.assets/image-20210318085921553.png)
+
+![image-20210318090131225](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318090131225.png)
+
+再设置目标IP，设置端口号，设置发动攻击主机的IP
+
+![image-20210318090555854](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318090555854.png)
+
+![image-20210318090637782](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210318090637782.png)
+
+
+
+设置完参数后直接输入攻击命令，`exploit` 或者 `run` 
+
+攻击成功后，我们会和目标主机建立一个shell连接！
+
+![image-20210318091744865](images/Web%E5%AE%89%E5%85%A8%E6%94%BB%E9%98%B2.assets/image-20210318091744865.png)
+
+
+
+### 后渗透攻击：信息收集
+
+
+
+
+
+
+
+
+
+
 
 
 
