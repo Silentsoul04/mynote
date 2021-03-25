@@ -4930,6 +4930,7 @@ get-Help Invoke-AllChecks -full
 
   ```
   Get-ServiceUnquoted
+  Get-UnquotedService		//或者用这个
   ```
 
 - **检查系统的部署凭据** x
@@ -5006,6 +5007,12 @@ get-Help Invoke-AllChecks -full
 
   该模块用于输出一个自定义命令并且能够自我删除的.bat文件到$env:Temp\debug.bat，并输出一个能够启动这个bat文件的DLL
 
+  例如这样就可以添加一个管理员用户，账户：john
+
+  ```
+  Write-HijackDll -dllpath C:\Users\Administrator\Desktop\2.dll
+  ```
+
   
 
 - **生成一个安装文件用于添加用户**
@@ -5044,7 +5051,7 @@ get-Help Invoke-AllChecks -full
   net localgroup administrators
   ```
 
-- **写入一个管理员用户**
+- **写入一个管理员用户** x
 
   创建名为“ Common.exe”的可执行文件，该可执行文件会将密码为“p4ssword123”的新用户“ badmin”添加到管理员组。
 
@@ -5054,25 +5061,49 @@ get-Help Invoke-AllChecks -full
   Invoke-ServiceAbuse -Name 'AbyssWebServer' -User hacker -Password Password1337
   ```
 
-  
-
-- 
 
 
 
 
 
+##### PowerUp实战
+
+先加载PowerUp模块，执行 `Invoke-AllChecks | Format-List > 1.txt` 查看系统的脆弱点，这里我们直接导出文件
+
+```
+Get-UnquotedService > 1.txt
+```
+
+![image-20210325191922736](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210325191922736.png)
+
+这里给的AbuseFunction字段直接给出了利用方式！
+
+我们可以参考并执行
+
+**知识点：**漏洞利用原理。Windows系统服务文件在操作系统启动时会加载执行，并且在后台调用可执行文件。比如在每次重启系统时，Java升级程序都会检测Oracle网站是否有新版Java程序。而类似Java程序之类的系统服务程序，在加载时往往都是运行在系统权限上的。所以如果一个低权限的用户对于此类系统服务调用的可执行文件具有可写的权限，那么就可以将其替换成我们的恶意可执行文件，从而随着系统启动服务获得系统权限。
 
 
 
 
 
+### Empire工具
 
+Empire也是一款使用PowerShell脚本作为攻击载荷的渗透攻击框架工具。具有从stager生成、提权到渗透维持的一系列功能。
 
+Empire实现了无需PowerShell.exe就可运行PowerShell代理的功能，还可以快速在后期部署漏洞利用模块，其内置模块有键盘记录、Mimikatz、绕过UAC、内网扫描等，并且能够躲避大部分安全防护工具的查杀，是一个基于PowerShell的远程控制木马！
 
+> GitHub地址：https://github.com/EmpireProject/Empire.git
+>
 
+**安装**
 
+```
+git clone https://github.com/EmpireProject/Empire.git
+cd Empire/setup
+sudo ./install.sh
+```
 
+安装结束后Empire目录下输入 `./empire` 
 
 
 
