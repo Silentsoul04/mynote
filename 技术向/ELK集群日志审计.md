@@ -52,7 +52,7 @@ mkdir -p /root/data/logstash/config
 ```
 docker pull elasticsearch:7.10.1
 
-docker run -d --name elasticsearch --net my-network -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" -v /root/data/es/data:/var/lib/elasticsearch elasticsearch:7.10.1
+docker run -d --restart=always --name elasticsearch --net my-network -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" -v /root/data/es/data:/var/lib/elasticsearch elasticsearch:7.10.1
 ```
 
 检测 elasticsearch 是否启动成功
