@@ -10,7 +10,7 @@ http://192.168.16.117:8075/WebReport/ReportServer?op=chart&cmd=get_geo_json&reso
 
 在帆软系统中使用硬编码的方式存储照着解密算法，我们使用Python写一份解密脚本
 
-![image-20210410143550365](images/%E8%87%B4%E8%BF%9COA%E8%BF%9C%E7%A8%8B%E4%BB%A3%E7%A0%81%E6%89%A7%E8%A1%8C.assets/image-20210410143550365.png)
+![image-20210410143550365](images/%E8%87%B4%E8%BF%9COA.assets/image-20210410143550365.png)
 
 ```python
 def decode(cipher):

