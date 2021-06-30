@@ -163,7 +163,9 @@ pip3升级失败
 python -m ensurepip
 ```
 
-
+```
+python -m pip install --upgrade pip -i https://pypi.douban.com/simple
+```
 
 
 
@@ -181,3 +183,11 @@ ImportError: No module named Crypto.Util.number
 重新安装： pip install pycryptodome -i ![img](file:///C:\Users\Antlers\AppData\Roaming\Tencent\QQTempSys\%W@GJ$ACOF(TYDYECOKVDYB.png)https://pypi.tuna.tsinghua.edu.cn/simple
 
 重新执行后，恢复正常
+
+
+
+
+
+
+
+参考：https://www.cnblogs.com/labster/p/13392644.html
