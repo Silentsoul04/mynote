@@ -24,3 +24,43 @@ sudo apt-get -y install docker-ce
 # sudo apt-get -y install docker-ce=[VERSION]
 ```
 
+**docker使用脚本安装**
+
+```
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+```
+
+
+
+
+
+**Docker-Compose安装**
+
+```
+pip3 -V
+pip3 install docker-compose
+docker-compose -version
+
+pip uninstall docker-compose
+```
+
+设置开机自启
+
+```
+sudo systemctl enable docker
+```
+
+[设置国内镜像](https://cr.console.aliyun.com/cn-hangzhou/instances/mirrors)
+
+```
+sudo mkdir -p /etc/docker
+sudo tee /etc/docker/daemon.json <<-'EOF'
+{
+  "registry-mirrors": ["https://自己的.mirror.aliyuncs.com"]
+}
+EOF
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+```
+

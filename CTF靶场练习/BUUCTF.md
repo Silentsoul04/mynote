@@ -71,7 +71,6 @@ target=127.0.0.1 || cat /flag
 其中发现`self.application.settings`有一个别名
 
 > handler指向的处理当前这个页面的`RequestHandler`对象， `RequestHandler.settings`指向`self.application.settings`， 因此`handler.settings`指向`RequestHandler.application.settings`
->
 
 因此我们可以试一下模板注入，发现指向了新页面，error页面
 

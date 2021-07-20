@@ -50,7 +50,7 @@ docker run -d --privileged=true --name nps -p 8080:8080 -p 8024:8024 -p 10150-10
 #示例
 docker run -d --privileged=true --name nps -p 8080:8080 -p 8024:8024 -p 10150-10179:10150-10179 -v /home/nps:/nps/conf oldiy/nps-server:latest
 
-docker run -d --privileged=true --name nps -p 8080:8080 -p 8024:8024 -p 10150-10179:10150-10179 -v /www/nps:/nps/conf oldiy/nps-server:latest
+docker run -d --privileged=true --name nps -p 8080:8080 -p 8024:8024 -p 10150-10179:10150-10179 -v /root/nps:/nps/conf oldiy/nps-server:latest
 修改密码后
 docker rm 容器号
 ```
@@ -61,6 +61,12 @@ docker rm 容器号
 docker run -d --privileged=true --name nps --net=host -v <本机conf目录>:/nps/conf oldiy/nps-server:latest
 ```
 
+默认账户/密码：admin/123
+
+修改密码，直接修改映射出的主配置文件就好了。
+
+记得去放行端口
+
 
 
 ### 自行搭建
@@ -68,11 +74,41 @@ docker run -d --privileged=true --name nps --net=host -v <本机conf目录>:/nps
 下载服务端nps，并安装
 
 ```
-wget https://github.com/ehang-io/nps/releases/download/v0.26.8/linux_amd64_server.tar.gz
+wget https://github.com/ehang-io/nps/releases/download/v0.26.10/linux_amd64_server.tar.gz
 
 tar -zxvf linux_amd64_server.tar.gz
 
 ./nps start
+```
+
+### 服务端启动
+
+下载完服务器压缩包后，解压，然后进入解压后的文件夹
+
+- 执行安装命令
+
+对于linux|darwin `sudo ./nps install`
+
+对于windows，管理员身份运行cmd，进入安装目录 `nps.exe install`
+
+- 默认端口
+
+nps默认配置文件使用了80，443，8080，8024端口
+
+80与443端口为域名解析模式默认端口
+
+8080为web管理访问端口
+
+8024为网桥端口，用于客户端与服务器通信
+
+- 启动
+
+对于linux|darwin `sudo nps start`
+
+对于windows，管理员身份运行cmd，进入程序目录 `nps.exe start`
+
+```
+安装后windows配置文件位于 C:\Program Files\nps，linux和darwin位于/etc/nps
 ```
 
 
@@ -80,6 +116,20 @@ tar -zxvf linux_amd64_server.tar.gz
 ## 客户端
 
 我们去Github下载自己需要的客户端，[NPS项目地址](https://github.com/ehang-io/nps)
+
+在服务端web页面新增
+
+![image-20210708122839770](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210708122839770.png)
+
+设置对应的参数
+
+![image-20210708122948471](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210708122948471.png)
+
+添加完成后，可以在列表中看到客户端信息，且客户端处于offline状态（因为我们还未在内网设备上输入指令连接服务端）。点击左侧按钮查看详细信息，我们可以看到系统生成（或手动指定）的通信密钥，以及客户端连接服务端的命令。
+
+![image-20210708123056832](https://antlersmaskdown.oss-cn-hangzhou.aliyuncs.com/image-20210708123056832.png)
+
+直接复制命令就可以在客户端使用了
 
 
 
@@ -92,3 +142,4 @@ tar -zxvf linux_amd64_server.tar.gz
 [自己搭建nps内网穿透反向代理服务器使用教程](https://idc.wanyunshuju.com/aqst/1821.html)
 
 https://ld246.com/article/1596364309400
+

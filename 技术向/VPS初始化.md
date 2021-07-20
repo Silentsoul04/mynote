@@ -1,4 +1,6 @@
-# Centos初始化
+# VPS的初始化
+
+## Centos初始化
 
 在运行更新之前，您可以使用以下命令检查可用更新：
 
@@ -17,3 +19,32 @@ sudo yum install curl
 ```
 sudo yum update
 ```
+
+
+
+## Ubuntu初始化
+
+**刷新可安装的软件列表**
+
+```
+apt-get update
+```
+
+**进行安装包的更新**
+
+```
+apt-get upgrade
+```
+
+**进行系统版本的升级**
+
+```
+apt-get dist-upgrade
+```
+
+**Ubuntu官方推荐的系统升级方式**
+
+```
+do-release-upgrade
+```
+
